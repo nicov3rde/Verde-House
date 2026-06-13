@@ -1,98 +1,23 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
-	import ComingSoon from '$lib/components/ComingSoon.svelte';
+	import BountyCreatorForm from '$lib/components/BountyCreatorForm.svelte';
 
-	type Short = {
-		title: string;
-		hook_sentence: string;
-		score: number;
-		start_time: number;
-		end_time: number;
-		filename: string | null;
-		error?: string;
+	let { data } = $props();
+
+	const statusLabel: Record<string, string> = {
+		pending_payment: 'Pending Payment',
+		open: 'Open',
+		closed: 'Closed',
 	};
 
-	type JobStatus = {
-		status: 'running' | 'done' | 'error';
-		message: string;
-		percent: number;
-		log: string[];
-		shorts?: Short[];
-		error?: string;
+	const statusBadgeClass: Record<string, string> = {
+		pending_payment: 'badge-pending',
+		open: 'badge-open',
+		closed: 'badge-closed',
 	};
 
-	let url = $state('');
-	let numClips = $state(5);
-	let aspectRatio = $state('9:16');
-
-	let jobId = $state<string | null>(null);
-	let job = $state<JobStatus | null>(null);
-	let submitting = $state(false);
-	let formError = $state('');
-
-	let pollHandle: ReturnType<typeof setInterval> | null = null;
-
-	function stopPolling() {
-		if (pollHandle) {
-			clearInterval(pollHandle);
-			pollHandle = null;
-		}
+	function fmtUsdc(n: number) {
+		return `$${n.toFixed(2)}`;
 	}
-
-	function startPolling() {
-		stopPolling();
-		pollHandle = setInterval(async () => {
-			if (!jobId) return;
-			const res = await fetch(`/api/clips/${jobId}`);
-			if (!res.ok) return;
-			job = await res.json();
-			if (job?.status === 'done' || job?.status === 'error') stopPolling();
-		}, 3000);
-	}
-
-	async function generate() {
-		formError = '';
-		if (!url.trim()) {
-			formError = 'Paste a YouTube URL first.';
-			return;
-		}
-		submitting = true;
-		job = null;
-		try {
-			const res = await fetch('/api/clips', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ url: url.trim(), numClips, aspectRatio })
-			});
-			if (!res.ok) {
-				const data = await res.json().catch(() => ({}));
-				throw new Error(data.message ?? 'Failed to start job');
-			}
-			const data = await res.json();
-			jobId = data.jobId;
-			job = { status: 'running', message: 'Starting…', percent: 2, log: [] };
-			startPolling();
-		} catch (e) {
-			formError = e instanceof Error ? e.message : 'Something went wrong';
-		} finally {
-			submitting = false;
-		}
-	}
-
-	function reset() {
-		stopPolling();
-		jobId = null;
-		job = null;
-		formError = '';
-	}
-
-	function fmtTime(sec: number) {
-		const m = Math.floor(sec / 60);
-		const s = Math.floor(sec % 60);
-		return `${m}:${s.toString().padStart(2, '0')}`;
-	}
-
-	onDestroy(stopPolling);
 </script>
 
 <svelte:head>
@@ -100,133 +25,81 @@
 </svelte:head>
 
 <div class="profile-col">
-	<h1 style="font-size:1.3rem">Marketplace</h1>
-
-	<div class="card" style="padding:1.25rem">
-		<h2 style="font-size:1.05rem;margin-bottom:0.25rem">🎬 Clip Studio</h2>
-		<p class="text-secondary" style="font-size:0.85rem;margin-bottom:1rem">
-			Paste a YouTube link and generate short, vertical clips with burned-in captions —
-			handy for whipping up marketing content for Verde House.
-		</p>
-
-		{#if !job || job.status === 'error'}
-			<div class="form-group">
-				<label class="form-label" for="clip-url">YouTube URL</label>
-				<input
-					id="clip-url"
-					class="input"
-					type="url"
-					placeholder="https://www.youtube.com/watch?v=..."
-					bind:value={url}
-					disabled={submitting}
-				/>
-			</div>
-
-			<div style="display:flex;gap:1rem;margin-top:0.75rem;flex-wrap:wrap">
-				<div class="form-group" style="flex:1;min-width:140px">
-					<label class="form-label" for="clip-count">Number of clips</label>
-					<input
-						id="clip-count"
-						class="input"
-						type="number"
-						min="1"
-						max="15"
-						bind:value={numClips}
-						disabled={submitting}
-					/>
-				</div>
-				<div class="form-group" style="flex:1;min-width:140px">
-					<label class="form-label" for="aspect">Aspect ratio</label>
-					<select id="aspect" class="input" bind:value={aspectRatio} disabled={submitting}>
-						<option value="9:16">9:16 (vertical)</option>
-						<option value="1:1">1:1 (square)</option>
-						<option value="16:9">16:9 (horizontal)</option>
-					</select>
-				</div>
-			</div>
-
-			{#if formError}
-				<p class="form-error" style="margin-top:0.5rem">{formError}</p>
-			{/if}
-			{#if job?.status === 'error'}
-				<p class="form-error" style="margin-top:0.5rem">{job.error}</p>
-			{/if}
-
-			<button
-				class="btn btn-primary btn-lg"
-				style="margin-top:1rem;width:100%"
-				onclick={generate}
-				disabled={submitting}
-			>
-				{#if submitting}<span class="spinner"></span> Starting…{:else}Generate Clips{/if}
-			</button>
-		{/if}
-
-		{#if job && job.status === 'running'}
-			<div style="margin-top:1rem">
-				<div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.5rem">
-					<span class="spinner"></span>
-					<span style="font-size:0.9rem;font-weight:600">{job.message}</span>
-				</div>
-				<div style="background:var(--bg-input);border-radius:99px;height:8px;overflow:hidden">
-					<div
-						style="background:var(--verde);height:100%;width:{job.percent}%;transition:width 0.4s"
-					></div>
-				</div>
-				<pre
-					style="margin-top:0.75rem;max-height:160px;overflow-y:auto;font-size:0.7rem;color:var(--text-muted);background:var(--bg-input);padding:0.6rem;border-radius:0.5rem;white-space:pre-wrap">{job.log.join(
-						'\n'
-					)}</pre>
-			</div>
-		{/if}
-
-		{#if job && job.status === 'done' && job.shorts}
-			<div style="margin-top:1rem;display:flex;flex-direction:column;gap:1rem">
-				{#each job.shorts as short, i (i)}
-					{#if short.filename}
-						<div class="card-elevated" style="padding:0.75rem;display:flex;gap:0.75rem;flex-wrap:wrap">
-							<video
-								controls
-								preload="metadata"
-								style="width:160px;aspect-ratio:9/16;border-radius:0.5rem;background:#000;object-fit:cover;flex-shrink:0"
-								src={`/api/clips/${jobId}/file/${short.filename}`}
-							></video>
-							<div style="flex:1;min-width:180px">
-								<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.35rem">
-									<span class="badge badge-verified">Score {short.score}</span>
-									<span class="text-muted" style="font-size:0.75rem"
-										>{fmtTime(short.start_time)}–{fmtTime(short.end_time)}</span
-									>
-								</div>
-								<div style="font-weight:600;font-size:0.9rem;margin-bottom:0.25rem">{short.title}</div>
-								<div class="text-secondary" style="font-size:0.8rem;margin-bottom:0.6rem">
-									"{short.hook_sentence}"
-								</div>
-								<a
-									class="btn btn-secondary btn-sm"
-									href={`/api/clips/${jobId}/file/${short.filename}`}
-									download={short.filename}
-								>
-									⬇ Download
-								</a>
-							</div>
-						</div>
-					{:else}
-						<div class="card-elevated" style="padding:0.75rem;color:#ff5050;font-size:0.85rem">
-							Clip {i + 1} failed: {short.error}
-						</div>
-					{/if}
-				{/each}
-			</div>
-			<button class="btn btn-secondary" style="margin-top:1rem" onclick={reset}>
-				Generate another
-			</button>
-		{/if}
+	<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem">
+		<h1 style="font-size:1.3rem">Marketplace</h1>
+		<a href="/marketplace/clips" class="btn btn-secondary btn-sm">🎬 Clip Studio</a>
 	</div>
 
-	<ComingSoon
-		icon="🛍️"
-		title="Marketplace is on the way"
-		description="Local bounties, business perks, and USDC payouts will live here. The social side comes first — this is next."
+	<div class="stat-grid">
+		<div class="stat-card">
+			<div class="stat-label">Total Campaigns</div>
+			<div class="stat-value">{data.stats.totalCampaigns}</div>
+			<div class="stat-sub">+{data.stats.newThisWeek} new this week</div>
+		</div>
+		<div class="stat-card">
+			<div class="stat-label">Verified Submissions</div>
+			<div class="stat-value">{data.stats.verifiedSubmissions}</div>
+			<div class="stat-sub">{data.stats.humanRate}% human-rate</div>
+		</div>
+		<div class="stat-card">
+			<div class="stat-label">Shielded Payouts</div>
+			<div class="stat-value">{fmtUsdc(data.stats.shieldedPayoutsUsdc)} USDC</div>
+			<div class="stat-sub">{data.stats.privatePayoutPct}% Unlink Private</div>
+		</div>
+	</div>
+
+	<BountyCreatorForm
+		currentUser={data.currentUser}
+		paymentsMode={data.paymentsMode}
+		stripePublishableKey={data.stripePublishableKey}
 	/>
+
+	<div class="card" style="padding:1.25rem">
+		<h2 style="font-size:1.05rem;margin-bottom:0.75rem">Active Bounty Ledger</h2>
+
+		{#if data.ledger.length === 0}
+			<div style="text-align:center;padding:2rem 1rem;color:var(--text-muted)">
+				<div style="font-size:2rem;margin-bottom:0.5rem">🛍️</div>
+				<div style="font-weight:600">No bounty campaigns yet</div>
+				<div style="font-size:0.85rem;margin-top:0.25rem">Deploy one above to see it here.</div>
+			</div>
+		{:else}
+			<div class="ledger-table-wrap">
+				<table class="ledger-table">
+					<thead>
+						<tr>
+							<th>Campaign</th>
+							<th>Brand</th>
+							<th>Geo-Fence</th>
+							<th>Reward</th>
+							<th>Claims</th>
+							<th>Status</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each data.ledger as b (b.id)}
+							<tr>
+								<td>
+									<a href={`/marketplace/${b.id}`} style="font-weight:600;color:var(--text-primary)">{b.title}</a>
+								</td>
+								<td>{b.brand}</td>
+								<td>
+									{#if b.placeName}
+										{b.placeName} · {b.radiusMiles}mi
+									{:else}
+										<span class="text-muted">—</span>
+									{/if}
+								</td>
+								<td>{fmtUsdc(b.rewardUsdc)} USDC</td>
+								<td>{b.claimCount} / {b.maxClaims}</td>
+								<td>
+									<span class="badge {statusBadgeClass[b.status] ?? ''}">{statusLabel[b.status] ?? b.status}</span>
+								</td>
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+		{/if}
+	</div>
 </div>
