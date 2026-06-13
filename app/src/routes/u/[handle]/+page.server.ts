@@ -3,6 +3,7 @@ import { error, redirect } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import { users, posts, follows, likes, saves } from '$lib/db/schema';
 import { eq, and, desc, inArray } from 'drizzle-orm';
+import { getChainProfile } from '$lib/server/services';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	if (!locals.user) throw redirect(302, '/auth/login');
@@ -59,6 +60,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	return {
 		profileUser: safeUser,
+		chainProfile: getChainProfile(profileUser, userPosts),
 		user: safeViewer,
 		posts: userPosts.map((p) => ({
 			...p,

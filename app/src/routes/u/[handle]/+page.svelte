@@ -22,12 +22,18 @@
 		}
 	}
 
-	const expertise = [
-		{ key: 'expertisePizza', label: 'Pizza', emoji: '🍕' },
-		{ key: 'expertiseCoffee', label: 'Coffee', emoji: '☕' },
-		{ key: 'expertiseNightlife', label: 'Nightlife', emoji: '🌃' },
-		{ key: 'expertiseGym', label: 'Gym', emoji: '💪' },
+	const expertiseCategories = [
+		{ key: 'pizza', label: 'Pizza Exp', emoji: '🍕' },
+		{ key: 'coffee', label: 'Coffee Exp', emoji: '☕' },
+		{ key: 'nightlife', label: 'Nightlife', emoji: '🌃' },
+		{ key: 'gym', label: 'Gym', emoji: '💪' },
+		{ key: 'localTrust', label: 'Local Trust', emoji: '📍' },
 	] as const;
+
+	function shorten(hash: string | null) {
+		if (!hash) return '—';
+		return hash.length > 12 ? `${hash.slice(0, 6)}…${hash.slice(-4)}` : hash;
+	}
 </script>
 
 <svelte:head>
@@ -48,10 +54,19 @@
 				{#if data.profileUser.isAgent}
 					<span class="badge badge-agent">Agent</span>
 				{/if}
-				{#if data.profileUser.worldIdVerified}
+				{#if data.chainProfile.worldId.verified}
 					<span class="badge badge-verified">
 						<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
-						Verified
+						World ID: Verified
+					</span>
+				{/if}
+				{#if data.chainProfile.ens.name}
+					<span class="badge badge-ens">{data.chainProfile.ens.name}</span>
+				{/if}
+				{#if data.chainProfile.unlink.privacyActive}
+					<span class="badge badge-unlink">
+						<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+						Privacy Active
 					</span>
 				{/if}
 			</div>
@@ -76,16 +91,6 @@
 				</div>
 			</div>
 
-			{#if expertise.some((e) => (data.profileUser[e.key] ?? 0) > 0)}
-				<div class="expertise-row">
-					{#each expertise as e}
-						{#if (data.profileUser[e.key] ?? 0) > 0}
-							<span class="expertise-badge">{e.emoji} {e.label} · {data.profileUser[e.key]}</span>
-						{/if}
-					{/each}
-				</div>
-			{/if}
-
 			<div style="margin-top:1rem">
 				{#if data.isOwnProfile}
 					<a href="/settings" class="btn btn-secondary btn-sm">Edit profile</a>
@@ -98,6 +103,27 @@
 		</div>
 	</div>
 
+	{#if expertiseCategories.some((c) => data.chainProfile.ens.expertise[c.key] > 0)}
+		<div class="card" style="padding:1.25rem">
+			<h2 style="font-size:1.05rem;margin-bottom:0.25rem">Reliability &amp; Expertise</h2>
+			<p class="text-secondary" style="font-size:0.8rem;margin-bottom:0.85rem">
+				{#if data.chainProfile.ens.name}
+					Synced to {data.chainProfile.ens.name}'s ENS text records.
+				{:else}
+					Set an ENS name in settings to mirror these as on-chain text records.
+				{/if}
+			</p>
+			<div class="reliability-grid">
+				{#each expertiseCategories as c}
+					<div class="reliability-card">
+						<div class="reliability-num">{data.chainProfile.ens.expertise[c.key]}</div>
+						<div class="reliability-label">{c.emoji} {c.label}</div>
+					</div>
+				{/each}
+			</div>
+		</div>
+	{/if}
+
 	<div class="divider"></div>
 
 	{#if data.posts.length === 0}
@@ -108,4 +134,59 @@
 	{:else}
 		<PostGrid posts={data.posts} currentUserId={data.user.id} />
 	{/if}
+
+	<div class="divider"></div>
+
+	<div class="card" style="padding:1.25rem">
+		<h2 style="font-size:0.8rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:0.85rem">
+			Powered by
+		</h2>
+		<div class="tech-grid">
+			<div class="tech-card">
+				<div class="tech-card-header">
+					<span class="tech-name" style="color:var(--world-blue)">World Stack</span>
+					<span class="tech-status-dot" class:stub={!data.chainProfile.worldId.verified}></span>
+				</div>
+				<p class="tech-desc">World ID verifies personhood; AgentKit runs autonomous trust-verification agents on-chain.</p>
+				<div class="tech-detail">
+					{#if data.chainProfile.worldId.verified}
+						Nullifier {shorten(data.chainProfile.worldId.nullifierHash)}
+					{:else}
+						Not yet verified
+					{/if}
+				</div>
+			</div>
+
+			<div class="tech-card">
+				<div class="tech-card-header">
+					<span class="tech-name" style="color:var(--unlink-purple)">Unlink SDK</span>
+					<span class="tech-status-dot" class:stub={!data.chainProfile.unlink.privacyActive}></span>
+				</div>
+				<p class="tech-desc">Private USDC balances &amp; transfers — hides earnings behind ZK proofs.</p>
+				<div class="tech-detail">
+					{data.chainProfile.unlink.privacyActive ? 'Shielded balances active' : 'Privacy mode off'}
+				</div>
+			</div>
+
+			<div class="tech-card">
+				<div class="tech-card-header">
+					<span class="tech-name" style="color:var(--ens-cyan)">ENS Identity</span>
+					<span class="tech-status-dot" class:stub={!data.chainProfile.ens.name}></span>
+				</div>
+				<p class="tech-desc">Portable on-chain identity. Expertise scores mirror to ENS text records.</p>
+				<div class="tech-detail">
+					{data.chainProfile.ens.name ?? 'No ENS name set'}
+				</div>
+			</div>
+
+			<div class="tech-card">
+				<div class="tech-card-header">
+					<span class="tech-name" style="color:var(--arc-gold)">Arc L1</span>
+					<span class="tech-status-dot stub"></span>
+				</div>
+				<p class="tech-desc">Circle's purpose-built L1 — settles USDC bounty payouts at low cost.</p>
+				<div class="tech-detail">Payouts stubbed — settlement layer not yet connected</div>
+			</div>
+		</div>
+	</div>
 </div>
