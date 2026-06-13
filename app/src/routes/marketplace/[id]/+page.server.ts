@@ -3,6 +3,7 @@ import { error, redirect } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import { bounties, bountyClaims, users, posts } from '$lib/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
+import { verification } from '$lib/server/services/verification';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	if (!locals.user) throw redirect(302, '/auth/login');
@@ -27,6 +28,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			verifiedAt: bountyClaims.verifiedAt,
 			payoutTxHash: bountyClaims.payoutTxHash,
 			fulfillmentPostId: bountyClaims.fulfillmentPostId,
+			agentVerified: bountyClaims.agentVerified,
+			agentNotes: bountyClaims.agentNotes,
 			user: {
 				id: users.id,
 				handle: users.handle,
@@ -39,7 +42,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 				id: posts.id,
 				caption: posts.caption,
 				imageUrl: posts.imageUrl,
+				videoUrl: posts.videoUrl,
 				createdAt: posts.createdAt,
+				lat: posts.lat,
+				lng: posts.lng,
+				verifiedVisit: posts.verifiedVisit,
 			},
 		})
 		.from(bountyClaims)
@@ -49,6 +56,26 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		.orderBy(desc(bountyClaims.acceptedAt));
 
 	const myClaim = claimRows.find((c) => c.user.id === locals.user!.id) ?? null;
+	const isCreator = locals.user.id === row.bounty.creatorId;
+
+	// Give the creator a live preview of the agent verification check before
+	// they decide on each pending submission.
+	const claims = await Promise.all(
+		claimRows.map(async (claim) => {
+			if (isCreator && claim.status === 'pending' && claim.post) {
+				const agentCheck = await verification.checkClaim({
+					id: claim.post.id,
+					lat: claim.post.lat,
+					lng: claim.post.lng,
+					verifiedVisit: claim.post.verifiedVisit,
+					imageUrl: claim.post.imageUrl,
+					videoUrl: claim.post.videoUrl,
+				});
+				return { ...claim, agentCheck };
+			}
+			return { ...claim, agentCheck: null };
+		}),
+	);
 
 	const { passwordHash, email, ...safeUser } = locals.user;
 
@@ -59,9 +86,9 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			rewardUsdc: Number(row.bounty.rewardUsdc),
 			radiusMiles: Number(row.bounty.radiusMiles),
 		},
-		claims: claimRows,
+		claims,
 		myClaim,
-		isCreator: locals.user.id === row.bounty.creatorId,
+		isCreator,
 		user: safeUser,
 	};
 };

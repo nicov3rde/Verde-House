@@ -19,6 +19,32 @@
 	let uploading = $state(false);
 	let uploadStatus = $state('');
 
+	let lat = $state<number | null>(null);
+	let lng = $state<number | null>(null);
+	let locationStatus = $state<'idle' | 'requesting' | 'shared' | 'unavailable'>('idle');
+
+	// Bounty fulfillment posts get geo-fence checked, so request the poster's
+	// location once when filling out a bounty submission.
+	$effect(() => {
+		if (!bountyClaim || locationStatus !== 'idle') return;
+		if (!('geolocation' in navigator)) {
+			locationStatus = 'unavailable';
+			return;
+		}
+		locationStatus = 'requesting';
+		navigator.geolocation.getCurrentPosition(
+			(pos) => {
+				lat = pos.coords.latitude;
+				lng = pos.coords.longitude;
+				locationStatus = 'shared';
+			},
+			() => {
+				locationStatus = 'unavailable';
+			},
+			{ timeout: 10000 },
+		);
+	});
+
 	async function onFileSelected(e: Event) {
 		const input = e.currentTarget as HTMLInputElement;
 		const file = input.files?.[0];
@@ -70,7 +96,7 @@
 			const res = await fetch('/api/posts', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ caption, imageUrl, videoUrl, placeName, bountyClaimId: bountyClaim?.id }),
+				body: JSON.stringify({ caption, imageUrl, videoUrl, placeName, bountyClaimId: bountyClaim?.id, lat, lng }),
 			});
 
 			if (!res.ok) throw new Error('Failed to create post');
@@ -91,8 +117,17 @@
 
 <form class="card" style="padding:1rem;display:flex;flex-direction:column;gap:0.75rem" onsubmit={submit}>
 	{#if bountyClaim}
-		<div class="badge badge-verified" style="align-self:flex-start">
-			🎯 Fulfilling bounty: {bountyClaim.bountyTitle}
+		<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+			<div class="badge badge-verified">
+				🎯 Fulfilling bounty: {bountyClaim.bountyTitle}
+			</div>
+			{#if locationStatus === 'shared'}
+				<span class="text-secondary" style="font-size:0.75rem">📍 Location shared for geo-fence check</span>
+			{:else if locationStatus === 'requesting'}
+				<span class="text-secondary" style="font-size:0.75rem">📍 Requesting location…</span>
+			{:else if locationStatus === 'unavailable'}
+				<span class="text-secondary" style="font-size:0.75rem">⚠️ Location unavailable — submission won't be geo-verified</span>
+			{/if}
 		</div>
 	{/if}
 	<div style="display:flex;gap:0.65rem;align-items:flex-start">

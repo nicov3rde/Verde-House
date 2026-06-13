@@ -28,6 +28,12 @@
 		rejected: 'badge-rejected',
 	};
 
+	function agentVerdictLabel(verified: boolean | null | undefined) {
+		if (verified === true) return '✅ Agent check: looks good';
+		if (verified === false) return '⚠️ Agent check: flagged for review';
+		return '❔ Agent check: inconclusive';
+	}
+
 	const isFull = $derived(data.bounty.claimCount >= data.bounty.maxClaims);
 	const canAccept = $derived(data.bounty.status === 'open' && data.bounty.active && !isFull && !data.myClaim);
 
@@ -167,44 +173,59 @@
 		{:else}
 			<div style="display:flex;flex-direction:column;gap:0.75rem">
 				{#each data.claims as claim (claim.id)}
-					<div
-						class="card-elevated"
-						style="padding:0.75rem;display:flex;align-items:center;justify-content:space-between;gap:0.75rem;flex-wrap:wrap"
-					>
-						<div style="display:flex;align-items:center;gap:0.6rem">
-							{#if claim.user.avatarUrl}
-								<img src={claim.user.avatarUrl} alt={claim.user.handle} class="avatar" style="width:32px;height:32px" />
-							{:else}
-								<div class="avatar-placeholder" style="width:32px;height:32px;font-size:0.8rem">{claim.user.displayName[0]}</div>
-							{/if}
-							<div>
-								<div style="font-size:0.85rem;font-weight:600">{claim.user.displayName}</div>
-								<div class="text-muted" style="font-size:0.75rem">@{claim.user.handle}</div>
+					<div class="card-elevated" style="padding:0.75rem;display:flex;flex-direction:column;gap:0.6rem">
+						<div style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;flex-wrap:wrap">
+							<div style="display:flex;align-items:center;gap:0.6rem">
+								{#if claim.user.avatarUrl}
+									<img src={claim.user.avatarUrl} alt={claim.user.handle} class="avatar" style="width:32px;height:32px" />
+								{:else}
+									<div class="avatar-placeholder" style="width:32px;height:32px;font-size:0.8rem">{claim.user.displayName[0]}</div>
+								{/if}
+								<div>
+									<div style="font-size:0.85rem;font-weight:600">{claim.user.displayName}</div>
+									<div class="text-muted" style="font-size:0.75rem">@{claim.user.handle}</div>
+								</div>
+							</div>
+
+							<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+								<span class="badge {claimStatusBadgeClass[claim.status] ?? ''}">{claim.status}</span>
+								{#if claim.post}
+									<a href={`/u/${claim.user.handle}`} class="btn btn-secondary btn-sm">View post</a>
+								{/if}
+								{#if data.isCreator && claim.status === 'pending' && claim.fulfillmentPostId}
+									<button
+										class="btn btn-primary btn-sm"
+										onclick={() => review(claim.id, 'verify')}
+										disabled={reviewingId === claim.id}
+									>
+										{reviewingId === claim.id ? '…' : 'Verify & Pay'}
+									</button>
+									<button
+										class="btn btn-danger btn-sm"
+										onclick={() => review(claim.id, 'reject')}
+										disabled={reviewingId === claim.id}
+									>
+										Reject
+									</button>
+								{/if}
 							</div>
 						</div>
 
-						<div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
-							<span class="badge {claimStatusBadgeClass[claim.status] ?? ''}">{claim.status}</span>
-							{#if claim.post}
-								<a href={`/u/${claim.user.handle}`} class="btn btn-secondary btn-sm">View post</a>
-							{/if}
-							{#if data.isCreator && claim.status === 'pending' && claim.fulfillmentPostId}
-								<button
-									class="btn btn-primary btn-sm"
-									onclick={() => review(claim.id, 'verify')}
-									disabled={reviewingId === claim.id}
-								>
-									{reviewingId === claim.id ? '…' : 'Verify & Pay'}
-								</button>
-								<button
-									class="btn btn-danger btn-sm"
-									onclick={() => review(claim.id, 'reject')}
-									disabled={reviewingId === claim.id}
-								>
-									Reject
-								</button>
-							{/if}
-						</div>
+						{#if data.isCreator && claim.agentCheck}
+							<div class="agent-check">
+								<div style="font-size:0.8rem;font-weight:600">{agentVerdictLabel(claim.agentCheck.verified)}</div>
+								<ul style="margin:0.35rem 0 0;padding-left:1.1rem;font-size:0.75rem;color:var(--text-muted);display:flex;flex-direction:column;gap:0.15rem">
+									<li>Geo/time match: {claim.agentCheck.checks.geoTimeMatch.detail}</li>
+									<li>Originality: {claim.agentCheck.checks.originality.detail}</li>
+									<li>External engagement (stubbed): {claim.agentCheck.checks.externalEngagement.detail}</li>
+								</ul>
+							</div>
+						{:else if claim.agentNotes}
+							<div class="agent-check">
+								<div style="font-size:0.8rem;font-weight:600">{agentVerdictLabel(claim.agentVerified)}</div>
+								<p style="margin:0.35rem 0 0;font-size:0.75rem;color:var(--text-muted)">{claim.agentNotes}</p>
+							</div>
+						{/if}
 					</div>
 				{/each}
 			</div>

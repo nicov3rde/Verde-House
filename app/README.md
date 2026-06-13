@@ -78,6 +78,23 @@ comments + saves). Capped at 100.
 
 **Local Trust** is the percentage of a user's posts that are verified visits.
 
+## Agent Verification
+
+When a bounty creator reviews a pending claim, `src/lib/server/services/verification.ts` runs an
+agent check on the fulfillment post and shows the creator a verdict before they verify/reject:
+
+- **Geo/time match** — reuses the geo-fence check already performed when the post was created
+  (`posts.verifiedVisit`, computed in `api/posts` from the poster's shared location vs. the
+  bounty's `lat`/`lng`/`radiusMiles`/`active`/`expiresAt`). `null` if the poster shared no location.
+- **Originality** — a real DB query for the post's `imageUrl`/`videoUrl` appearing on any other
+  post (possible repost/reused media).
+- **External engagement** — clearly **stubbed**: off-platform reach/social-share metrics aren't
+  connected, and this check never affects the verdict.
+
+The combined `verified: boolean | null` verdict and a human-readable `notes` string are stored on
+the claim (`bounty_claims.agent_verified` / `agent_notes`) when the creator verifies or rejects.
+This is advisory only — the business/admin always makes the final call.
+
 ## Creating a project
 
 If you're seeing this, you've probably already done this step. Congrats!

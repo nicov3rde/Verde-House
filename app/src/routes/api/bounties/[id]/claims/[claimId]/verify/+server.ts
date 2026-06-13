@@ -1,7 +1,7 @@
 import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
 import { db } from '$lib/db';
-import { bounties, bountyClaims, users, notifications } from '$lib/db/schema';
+import { bounties, bountyClaims, users, notifications, posts } from '$lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { payments } from '$lib/server/services/payments';
 import { verification } from '$lib/server/services/verification';
@@ -21,7 +21,10 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 	if (claim.status !== 'pending') throw error(400, 'Claim has already been reviewed');
 	if (!claim.fulfillmentPostId) throw error(400, 'This claim has no fulfillment post yet');
 
-	const agentCheck = await verification.checkClaim();
+	const [fulfillmentPost] = await db.select().from(posts).where(eq(posts.id, claim.fulfillmentPostId)).limit(1);
+	if (!fulfillmentPost) throw error(404, 'Fulfillment post not found');
+
+	const agentCheck = await verification.checkClaim(fulfillmentPost);
 
 	if (action === 'reject') {
 		await db
