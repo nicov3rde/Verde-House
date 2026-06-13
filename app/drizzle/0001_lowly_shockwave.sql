@@ -1,0 +1,2 @@
+CREATE TYPE "public"."bounty_status" AS ENUM('pending_payment', 'open', 'closed');--> statement-breakpoint
+ALTER TABLE "bounties" ADD COLUMN "status" "bounty_status" DEFAULT 'pending_payment' NOT NULL;

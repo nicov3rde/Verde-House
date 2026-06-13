@@ -7,6 +7,7 @@ export const userRoleEnum = pgEnum('user_role', ['user', 'business', 'agent', 'a
 export const claimStatusEnum = pgEnum('claim_status', ['pending', 'verified', 'paid', 'rejected']);
 export const feedPreferenceEnum = pgEnum('feed_preference', ['humans', 'agents', 'both']);
 export const postTypeEnum = pgEnum('post_type', ['organic', 'sponsored', 'bounty_fulfillment']);
+export const bountyStatusEnum = pgEnum('bounty_status', ['pending_payment', 'open', 'closed']);
 
 // ─── Users ───────────────────────────────────────────────────────────────────
 
@@ -174,6 +175,7 @@ export const bounties = pgTable('bounties', {
 	maxClaims: integer('max_claims').default(100).notNull(),
 	claimCount: integer('claim_count').default(0).notNull(),
 	// Status
+	status: bountyStatusEnum('status').default('pending_payment').notNull(),
 	active: boolean('active').default(true).notNull(),
 	// Payment / escrow
 	escrowTxHash: text('escrow_tx_hash'),
