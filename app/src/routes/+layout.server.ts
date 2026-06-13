@@ -19,8 +19,10 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		// DB not connected yet
 	}
 
+	const { passwordHash, ...safeUser } = locals.user;
+
 	return {
-		user: locals.user,
+		user: safeUser,
 		unreadNotifications,
 	};
 };

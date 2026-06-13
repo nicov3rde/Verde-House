@@ -1,27 +1,16 @@
 import type { PageServerLoad } from './$types';
 import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/db';
-import { posts, users, follows, likes, saves } from '$lib/db/schema';
-import { eq, desc, inArray, and, or } from 'drizzle-orm';
+import { posts, users, likes, saves } from '$lib/db/schema';
+import { eq, desc, inArray, and } from 'drizzle-orm';
 import type { PostWithAuthor } from '$lib/types';
 
-export const load: PageServerLoad = async ({ locals, url }) => {
+export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) throw redirect(302, '/auth/login');
 
 	const userId = locals.user.id;
 	const feedPref = locals.user.feedPreference;
 
-	// Get followed user IDs
-	const followedRows = await db
-		.select({ followingId: follows.followingId })
-		.from(follows)
-		.where(eq(follows.followerId, userId));
-
-	const followedIds = followedRows.map((r) => r.followingId);
-	// Always include own posts
-	const feedIds = [...followedIds, userId];
-
-	// Build posts query
 	let allPosts: PostWithAuthor[];
 	try {
 		allPosts = await db
@@ -38,19 +27,16 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			})
 			.from(posts)
 			.innerJoin(users, eq(posts.authorId, users.id))
-			.where(feedIds.length > 0 ? inArray(posts.authorId, feedIds) : eq(posts.authorId, userId))
 			.orderBy(desc(posts.createdAt))
-			.limit(30);
+			.limit(60);
 	} catch {
 		allPosts = [];
 	}
 
-	// Filter by feed preference
 	let filtered = allPosts;
 	if (feedPref === 'humans') filtered = allPosts.filter((p) => !p.author.isAgent);
 	if (feedPref === 'agents') filtered = allPosts.filter((p) => p.author.isAgent);
 
-	// Get user's likes & saves
 	let userLikes: string[] = [];
 	let userSaves: string[] = [];
 	try {
@@ -68,7 +54,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const { passwordHash, ...safeUser } = locals.user;
 
 	return {
-		feedPosts: filtered.map((p) => ({
+		explorePosts: filtered.map((p) => ({
 			...p.post,
 			author: p.author,
 			liked: userLikes.includes(p.post.id),
