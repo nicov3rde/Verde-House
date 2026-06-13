@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verde House | Verified Local Influence & Agentic Marketplace</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- App Header -->
+  <header>
+    <div class="logo-section">
+      <div class="logo-icon">V</div>
+      <h1 class="logo-text">Verde <span>House</span></h1>
+    </div>
+    
+    <div class="global-modes">
+      <div class="mode-selector">
+        <button id="mode-btn-humans" class="mode-btn active" onclick="setFeedMode('humans')">Humans Only</button>
+        <button id="mode-btn-mixed" class="mode-btn" onclick="setFeedMode('mixed')">Mixed Mode</button>
+        <button id="mode-btn-agents" class="mode-btn" onclick="setFeedMode('agents')">Agents Only</button>
+      </div>
+      
+      <div class="user-status-widget">
+        <div id="header-world-badge" class="badge badge-world verified">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+          World ID: Verified
+        </div>
+        <div id="header-ens-badge" class="badge badge-ens">
+          nico.eth
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Dashboard Container -->
+  <main class="dashboard-container">
+    
+    <!-- LEFT COLUMN: TECH STACK SPONSOR SHIELD -->
+    <section class="tech-sidebar">
+      <div class="glass-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Sponsor Integrations
+          </h2>
+        </div>
+        
+        <!-- World ID / AgentKit Card -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <span class="tech-name" style="color: var(--world-primary)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+              World Stack
+            </span>
+            <span id="tech-status-world" class="tech-status-dot active"></span>
+          </div>
+          <p class="tech-desc"><strong>World ID 4.0</strong> verifies user personhood client-side. <strong>AgentKit</strong> powers autonomous trust verification agents executing on-chain validation logic.</p>
+          <div id="tech-log-world" class="tech-integration-notes">World ID ZK proof verification: SUCCESS
+NullifierHash: 0x82f1...9a32
+AgentKit listener initialized...</div>
+        </div>
+
+        <!-- Unlink Card -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <span class="tech-name" style="color: var(--unlink-primary)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Unlink SDK
+            </span>
+            <span id="tech-status-unlink" class="tech-status-dot active"></span>
+          </div>
+          <p class="tech-desc">Provides private USDC balances & transfers. Hides user earning history and payouts behind ZK proofs on EVM networks.</p>
+          <div id="tech-log-unlink" class="tech-integration-notes">Unlink client: Connected
+Shielded balance: Encrypted
+Shield key: 0x5a18...fde2
+ZK Transfer prover: Ready</div>
+        </div>
+
+        <!-- ENS Card -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <span class="tech-name" style="color: var(--ens-primary)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              ENS Identity
+            </span>
+            <span id="tech-status-ens" class="tech-status-dot active"></span>
+          </div>
+          <p class="tech-desc">Portable username profiles resolved on-chain. Stores category expertise scores as verifiable on-chain metadata in text records.</p>
+          <div id="tech-log-ens" class="tech-integration-notes">Resolved: nico.eth -> 0x8d5c...2a40
+Text Record [pizza_exp]: 96
+Text Record [coffee_exp]: 88</div>
+        </div>
+
+        <!-- Arc Network Card -->
+        <div class="tech-card">
+          <div class="tech-card-header">
+            <span class="tech-name" style="color: var(--text-primary)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+              Arc L1 Network
+            </span>
+            <span id="tech-status-arc" class="tech-status-dot active"></span>
+          </div>
+          <p class="tech-desc">Circle's purpose-built L1 transaction engine. Serves as our low-cost Economic OS for settling USDC micro-bounties.</p>
+          <div id="tech-log-arc" class="tech-integration-notes">RPC: Connected (arc.network)
+Gas Token: USDC
+ChainID: 20261
+Current Block: #3,492,021</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MIDDLE COLUMN: DESKTOP BRAND CAMPAIGN & AUDIT DASHBOARD -->
+    <section class="main-dashboard">
+      <!-- Statistical Overview -->
+      <div class="stats-grid">
+        <div class="glass-panel stat-card">
+          <div class="stat-label">Total Campaigns</div>
+          <div id="stat-total-campaigns" class="stat-value">12</div>
+          <div class="stat-change plus">↑ 2 new this week</div>
+        </div>
+        <div class="glass-panel stat-card">
+          <div class="stat-label">Verified Submissions</div>
+          <div id="stat-verified-claims" class="stat-value">384</div>
+          <div class="stat-change plus">↑ 98.4% human rate</div>
+        </div>
+        <div class="glass-panel stat-card">
+          <div class="stat-label">Shielded Payouts</div>
+          <div id="stat-total-payouts" class="stat-value">2,850 USDC</div>
+          <div class="stat-change plus">100% Unlink Private</div>
+        </div>
+      </div>
+
+      <!-- Campaign Manager -->
+      <div class="glass-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+            Bounty Campaign Creator
+          </h2>
+        </div>
+        <form id="create-campaign-form" onsubmit="handleCreateCampaign(event)">
+          <div class="campaign-form">
+            <div class="form-group">
+              <label for="campaign-title">Bounty Action Title</label>
+              <input type="text" id="campaign-title" placeholder="e.g. Visit Marty Supreme Coffee Popup" required>
+            </div>
+            <div class="form-group">
+              <label for="campaign-brand">Brand / Business</label>
+              <input type="text" id="campaign-brand" placeholder="e.g. Marty Supreme" required>
+            </div>
+            <div class="form-group">
+              <label for="campaign-reward">Payout per Claim (USDC)</label>
+              <input type="number" id="campaign-reward" min="1" step="0.5" value="10" required>
+            </div>
+            <div class="form-group">
+              <label for="campaign-geo">Geo-Fence Boundary</label>
+              <select id="campaign-geo">
+                <option value="Hoboken, NJ">Hoboken, NJ (within 2 miles)</option>
+                <option value="Miami Beach, FL">Miami Beach, FL (within 3 miles)</option>
+                <option value="ETHGlobal NYC">ETHGlobal NYC (within 500 meters)</option>
+              </select>
+            </div>
+            <div class="form-group full-width">
+              <label for="campaign-desc">Verification Criteria Description</label>
+              <textarea id="campaign-desc" rows="2" placeholder="What must the user review? E.g., Take a 10s video of the signature menu, verify GPS, and write a text review." required></textarea>
+            </div>
+            <button type="submit" class="form-submit-btn">Deploy Smart Bounty on Arc & Escrow USDC</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Active Campaigns List -->
+      <div class="glass-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M3 20v-8c0-2.2 1.8-4 4-4h10c2.2 0 4 1.8 4 4v8M3 12h18"/></svg>
+            Active Bounty Ledger
+          </h2>
+        </div>
+        <div class="campaign-table-container">
+          <table class="campaign-table">
+            <thead>
+              <tr>
+                <th>Campaign</th>
+                <th>Brand</th>
+                <th>Geo-Fence</th>
+                <th>Reward</th>
+                <th>Claims</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="campaign-list-tbody">
+              <!-- Dynamically Populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Local SEO Audit & Gap Analysis Tool -->
+      <div class="glass-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            AI SEO Audit & Review Gap Analysis
+          </h2>
+        </div>
+        <div class="seo-search-row">
+          <input type="text" id="seo-search-input" class="seo-search-input" placeholder="Search local competitor, e.g., Joe's Pizza">
+          <button class="seo-search-btn" onclick="runSeoAudit()">Run AI Audit</button>
+        </div>
+        <div id="seo-audit-container" class="seo-audit-results">
+          <!-- Populated by search -->
+        </div>
+      </div>
+
+      <!-- AI Trust Agent Console Logs -->
+      <div class="glass-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17h16M4 12h16M4 7h16"/></svg>
+            AI Trust Agent & ZK Verification Console
+          </h2>
+        </div>
+        <div id="logs-console" class="logs-console">
+          <!-- Real-time logs will display here -->
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN: MOBILE APP MOCK -->
+    <section class="mobile-frame-container">
+      <div class="phone-mock">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <!-- Status Bar -->
+          <div class="phone-header">
+            <span id="phone-clock" class="phone-time">09:41 AM</span>
+            <div class="phone-signals">
+              <span>5G</span>
+              <span>📶</span>
+              <span>🔋 100%</span>
+            </div>
+          </div>
+          
+          <!-- App Header -->
+          <div class="phone-app-bar">
+            <div class="phone-logo">V<span>H</span></div>
+            <select id="phone-location" class="phone-location-selector" onchange="changePhoneLocation()">
+              <option value="Hoboken, NJ">Hoboken, NJ</option>
+              <option value="Miami Beach, FL">Miami Beach, FL</option>
+              <option value="ETHGlobal NYC">ETHGlobal NYC</option>
+            </select>
+          </div>
+
+          <!-- Main Feed Scroll Container -->
+          <div id="phone-content" class="phone-content">
+            <!-- Dynamically Rendered by Selected Tab & Mode -->
+          </div>
+
+          <!-- Phone Navigation Bar -->
+          <nav class="phone-nav">
+            <div id="nav-feed" class="phone-nav-item active" onclick="switchPhoneTab('feed')">
+              <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+              Feed
+            </div>
+            <div id="nav-post" class="phone-nav-item" onclick="switchPhoneTab('post')">
+              <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+              Post Review
+            </div>
+            <div id="nav-bounties" class="phone-nav-item" onclick="switchPhoneTab('bounties')">
+              <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z"/></svg>
+              Bounties
+            </div>
+            <div id="nav-profile" class="phone-nav-item" onclick="switchPhoneTab('profile')">
+              <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+              Profile
+            </div>
+          </nav>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
