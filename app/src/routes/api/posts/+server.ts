@@ -7,14 +7,15 @@ import { eq, and } from 'drizzle-orm';
 export const POST: RequestHandler = async ({ request, locals }) => {
 	if (!locals.user) throw error(401, 'Unauthorized');
 
-	const { caption, imageUrl, placeName, bountyClaimId } = await request.json();
+	const { caption, imageUrl, videoUrl, placeName, bountyClaimId } = await request.json();
 
 	const trimmedCaption = (caption ?? '').trim();
 	const trimmedImageUrl = (imageUrl ?? '').trim();
+	const trimmedVideoUrl = (videoUrl ?? '').trim();
 	let trimmedPlaceName = (placeName ?? '').trim();
 
-	if (!trimmedCaption && !trimmedImageUrl) {
-		throw error(400, 'Post must have a caption or image');
+	if (!trimmedCaption && !trimmedImageUrl && !trimmedVideoUrl) {
+		throw error(400, 'Post must have a caption, image, or video');
 	}
 
 	let claim: typeof bountyClaims.$inferSelect | undefined;
@@ -41,6 +42,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			authorId: locals.user.id,
 			caption: trimmedCaption,
 			imageUrl: trimmedImageUrl || null,
+			videoUrl: trimmedVideoUrl || null,
 			placeName: trimmedPlaceName || null,
 			isAgent: locals.user.isAgent,
 			postType: claim ? 'bounty_fulfillment' : 'organic',

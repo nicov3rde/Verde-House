@@ -25,7 +25,12 @@
 <div class="post-grid">
 	{#each posts as post (post.id)}
 		<button class="post-grid-tile" onclick={() => (activePost = post)}>
-			{#if post.imageUrl}
+			{#if post.videoUrl}
+				<video src={post.videoUrl} muted playsinline></video>
+				<span class="post-grid-video-icon" aria-hidden="true">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+				</span>
+			{:else if post.imageUrl}
 				<img src={post.imageUrl} alt="" loading="lazy" />
 			{:else}
 				<div class="post-grid-caption">{post.caption}</div>

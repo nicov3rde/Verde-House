@@ -82,8 +82,12 @@
 		<span style="font-size:0.75rem;color:var(--text-muted);flex-shrink:0">{formatDate(post.createdAt)}</span>
 	</div>
 
-	<!-- Image -->
-	{#if post.imageUrl}
+	<!-- Media -->
+	{#if post.videoUrl}
+		<div style="position:relative">
+			<video src={post.videoUrl} class="post-video" controls playsinline loop muted></video>
+		</div>
+	{:else if post.imageUrl}
 		<div style="position:relative">
 			<img src={post.imageUrl} alt="Post" class="post-image" />
 		</div>

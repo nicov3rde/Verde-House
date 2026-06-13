@@ -22,5 +22,6 @@ Thumbs.db
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
-.vercel
-.env*
+# Stub media uploads (dev-only, not for production storage)
+/static/uploads/*
+!/static/uploads/.gitkeep
