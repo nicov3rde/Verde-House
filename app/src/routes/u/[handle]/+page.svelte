@@ -46,8 +46,14 @@
 		{ key: 'pizza', label: 'Pizza Exp', emoji: '🍕' },
 		{ key: 'coffee', label: 'Coffee Exp', emoji: '☕' },
 		{ key: 'nightlife', label: 'Nightlife', emoji: '🌃' },
-		{ key: 'gym', label: 'Gym', emoji: '💪' },
 		{ key: 'localTrust', label: 'Local Trust', emoji: '📍' },
+	] as const;
+
+	const reliabilityBreakdown = [
+		{ key: 'worldId', label: 'World ID', emoji: '🪪', max: 25 },
+		{ key: 'accountAge', label: 'Account age', emoji: '📅', max: 20 },
+		{ key: 'verifiedVisits', label: 'Verified visits', emoji: '✓', max: 30 },
+		{ key: 'bountiesPaid', label: 'Bounties paid', emoji: '🎯', max: 25 },
 	] as const;
 
 	function shorten(hash: string | null) {
@@ -126,26 +132,39 @@
 		</div>
 	</div>
 
-	{#if expertiseCategories.some((c) => data.chainProfile.ens.expertise[c.key] > 0)}
-		<div class="card" style="padding:1.25rem">
-			<h2 style="font-size:1.05rem;margin-bottom:0.25rem">Reliability &amp; Expertise</h2>
-			<p class="text-secondary" style="font-size:0.8rem;margin-bottom:0.85rem">
-				{#if data.chainProfile.ens.name}
-					Synced to {data.chainProfile.ens.name}'s ENS text records.
-				{:else}
-					Set an ENS name in settings to mirror these as on-chain text records.
-				{/if}
-			</p>
-			<div class="reliability-grid">
-				{#each expertiseCategories as c}
-					<div class="reliability-card">
-						<div class="reliability-num">{data.chainProfile.ens.expertise[c.key]}</div>
-						<div class="reliability-label">{c.emoji} {c.label}</div>
-					</div>
-				{/each}
+	<div class="card" style="padding:1.25rem">
+		<h2 style="font-size:1.05rem;margin-bottom:0.25rem">Reliability &amp; Expertise</h2>
+		<p class="text-secondary" style="font-size:0.8rem;margin-bottom:0.85rem">
+			{#if data.chainProfile.ens.name}
+				Synced to {data.chainProfile.ens.name}'s ENS text records.
+			{:else}
+				Set an ENS name in settings to mirror these as on-chain text records.
+			{/if}
+		</p>
+
+		<div class="reliability-score">
+			<div class="reliability-score-num">{data.chainProfile.reliability.total}<span>/100</span></div>
+			<div style="flex:1;min-width:160px">
+				<div class="reliability-score-label">Reliability Score</div>
+				<div class="reliability-score-breakdown">
+					{#each reliabilityBreakdown as b}
+						<span title="{b.label}: {data.chainProfile.reliability.breakdown[b.key]}/{b.max}">
+							{b.emoji} {data.chainProfile.reliability.breakdown[b.key]}
+						</span>
+					{/each}
+				</div>
 			</div>
 		</div>
-	{/if}
+
+		<div class="reliability-grid">
+			{#each expertiseCategories as c}
+				<div class="reliability-card">
+					<div class="reliability-num">{data.chainProfile.ens.expertise[c.key]}</div>
+					<div class="reliability-label">{c.emoji} {c.label}</div>
+				</div>
+			{/each}
+		</div>
+	</div>
 
 	<div class="divider"></div>
 

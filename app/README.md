@@ -55,6 +55,29 @@ Without these keys, escrow is **simulated**: bounties are marked `open` and fund
 creation, and payouts on verified claims are recorded as stub transactions (`stub_pi_...` /
 `stub_tx_...`). The app behaves identically either way — only the payment rails differ.
 
+## Reliability & Expertise Scores
+
+Every profile shows a **Reliability Score** (0–100) and four **category expertise** scores
+(Pizza, Coffee, Nightlife, Local Trust), computed live from real data in `src/lib/server/services/reliability.ts` —
+nothing here is hardcoded or simulated.
+
+**Reliability Score** is the sum of:
+
+| Signal | Points |
+|---|---|
+| World ID verified | +25 |
+| Account age | +1 per 7 days, capped at +20 (~140 days for the max) |
+| Verified-visit posts | +5 each, capped at +30 |
+| Paid bounty claims | +10 each, capped at +25 |
+
+**Category expertise** (Pizza / Coffee / Nightlife) scans a user's posts for keyword matches in
+`placeName`/`caption` (e.g. "pizza"/"pizzeria"/"slice" for Pizza, "coffee"/"cafe"/"espresso" for
+Coffee, "bar"/"club"/"lounge" for Nightlife). Each matching post contributes +20 if it's a
+verified visit or +5 if not, plus up to +20 total from that category's engagement (likes +
+comments + saves). Capped at 100.
+
+**Local Trust** is the percentage of a user's posts that are verified visits.
+
 ## Creating a project
 
 If you're seeing this, you've probably already done this step. Congrats!

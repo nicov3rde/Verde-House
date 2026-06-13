@@ -1,7 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { error, redirect } from '@sveltejs/kit';
 import { db } from '$lib/db';
-import { users, posts, follows, likes, saves } from '$lib/db/schema';
+import { users, posts, follows, likes, saves, bountyClaims } from '$lib/db/schema';
 import { eq, and, desc, inArray } from 'drizzle-orm';
 import { getChainProfile } from '$lib/server/services';
 
@@ -22,9 +22,10 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		.where(eq(posts.authorId, profileUser.id))
 		.orderBy(desc(posts.createdAt));
 
-	const [followerRows, followingRows] = await Promise.all([
+	const [followerRows, followingRows, claimRows] = await Promise.all([
 		db.select().from(follows).where(eq(follows.followingId, profileUser.id)),
 		db.select().from(follows).where(eq(follows.followerId, profileUser.id)),
+		db.select({ status: bountyClaims.status }).from(bountyClaims).where(eq(bountyClaims.userId, profileUser.id)),
 	]);
 
 	let isFollowing = false;
@@ -60,7 +61,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 
 	return {
 		profileUser: safeUser,
-		chainProfile: getChainProfile(profileUser, userPosts),
+		chainProfile: getChainProfile(profileUser, userPosts, claimRows),
 		user: safeViewer,
 		posts: userPosts.map((p) => ({
 			...p,
