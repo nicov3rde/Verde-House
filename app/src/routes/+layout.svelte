@@ -89,7 +89,7 @@
 				<a href={item.href} class="nav-item" class:active={isActive(item.href)}>
 					{@render iconFor(item.icon)}
 					{item.label}
-					{#if item.icon === 'bell' && data.unreadNotifications}
+					{#if (item.icon === 'bell' && data.unreadNotifications) || (item.icon === 'messages' && data.unreadMessages)}
 						<span class="notif-dot"></span>
 					{/if}
 				</a>
@@ -131,9 +131,12 @@
 	<!-- Mobile bottom nav -->
 	<nav class="bottom-nav">
 		{#each [navItems[0], navItems[1], navItems[2], navItems[3], navItems[4]] as item}
-			<a href={item.href} class="bottom-nav-item" class:active={isActive(item.href)}>
+			<a href={item.href} class="bottom-nav-item" class:active={isActive(item.href)} style="position:relative">
 				<div style="width:22px;height:22px">{@render iconFor(item.icon)}</div>
 				{item.label}
+				{#if (item.icon === 'bell' && data.unreadNotifications) || (item.icon === 'messages' && data.unreadMessages)}
+					<span class="notif-dot" style="position:absolute;top:4px;right:calc(50% - 16px)"></span>
+				{/if}
 			</a>
 		{/each}
 	</nav>

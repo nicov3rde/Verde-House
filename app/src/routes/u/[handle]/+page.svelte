@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import PostGrid from '$lib/components/PostGrid.svelte';
 
 	let { data } = $props();
@@ -6,6 +7,25 @@
 	let following = $state(data.isFollowing);
 	let followerCount = $state(data.followerCount);
 	let pending = $state(false);
+	let messaging = $state(false);
+
+	async function messageUser() {
+		if (messaging) return;
+		messaging = true;
+		try {
+			const res = await fetch('/api/messages/conversations', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ userId: data.profileUser.id }),
+			});
+			if (res.ok) {
+				const { id } = await res.json();
+				goto(`/messages/${id}`);
+			}
+		} finally {
+			messaging = false;
+		}
+	}
 
 	async function toggleFollow() {
 		if (pending) return;
@@ -91,12 +111,15 @@
 				</div>
 			</div>
 
-			<div style="margin-top:1rem">
+			<div style="margin-top:1rem;display:flex;gap:0.5rem">
 				{#if data.isOwnProfile}
 					<a href="/settings" class="btn btn-secondary btn-sm">Edit profile</a>
 				{:else}
 					<button onclick={toggleFollow} class="btn btn-sm" class:btn-primary={!following} class:btn-secondary={following} disabled={pending}>
 						{following ? 'Following' : 'Follow'}
+					</button>
+					<button onclick={messageUser} class="btn btn-secondary btn-sm" disabled={messaging}>
+						Message
 					</button>
 				{/if}
 			</div>
