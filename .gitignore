@@ -1,0 +1,41 @@
+# Dependencies
+**/node_modules
+
+# SvelteKit / Vite build output
+**/.svelte-kit
+**/build
+**/.vercel
+**/.netlify
+**/.wrangler
+**/.output
+vite.config.*.timestamp-*
+
+# Python
+**/venv
+**/.venv
+**/__pycache__
+*.pyc
+
+# clip-bot is its own git repo (forked from AI-Youtube-Shorts-Generator) with its own history
+/clip-bot/
+
+# Generated media / job output
+**/output/
+*.mp4
+
+# Build output / runtime data
+**/dist/
+*.tsbuildinfo
+*.db
+*.db-shm
+*.db-wal
+
+# Env files (keep examples)
+.env
+.env.*
+!.env.example
+!*.env.example
+
+# OS
+.DS_Store
+Thumbs.db
