@@ -9,6 +9,7 @@ import { payments } from '$lib/server/services/payments';
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) throw redirect(302, '/auth/login');
 
+	const feedPref = locals.user.feedPreference;
 	const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
 	const [totalCampaigns, newThisWeek, verifiedClaims, humanVerifiedClaims, payoutAgg, privatePayoutAgg, ledgerRows] =
@@ -44,11 +45,17 @@ export const load: PageServerLoad = async ({ locals }) => {
 					status: bounties.status,
 					createdAt: bounties.createdAt,
 					brand: sql<string>`coalesce(${users.businessName}, ${users.displayName})`,
+					creatorIsAgent: users.isAgent,
 				})
 				.from(bounties)
 				.innerJoin(users, eq(bounties.creatorId, users.id))
 				.orderBy(desc(bounties.createdAt)),
 		]);
+
+	// Filter ledger by audience mode (creator's account type)
+	let filteredLedger = ledgerRows;
+	if (feedPref === 'humans') filteredLedger = ledgerRows.filter((b) => !b.creatorIsAgent);
+	if (feedPref === 'agents') filteredLedger = ledgerRows.filter((b) => b.creatorIsAgent);
 
 	const verifiedCount = Number(verifiedClaims[0]?.count ?? 0);
 	const humanCount = Number(humanVerifiedClaims[0]?.count ?? 0);
@@ -67,7 +74,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			shieldedPayoutsUsdc: totalPayouts,
 			privatePayoutPct,
 		},
-		ledger: ledgerRows.map((b) => ({
+		ledger: filteredLedger.map(({ creatorIsAgent, ...b }) => ({
 			...b,
 			radiusMiles: Number(b.radiusMiles),
 			rewardUsdc: Number(b.rewardUsdc),

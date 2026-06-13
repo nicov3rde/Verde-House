@@ -329,6 +329,61 @@ textarea.input {
 	min-height: 100vh;
 }
 
+/* ─── Top Bar ────────────────────────────────────────────────────────────────── */
+.topbar {
+	position: sticky;
+	top: 0;
+	z-index: 40;
+	display: flex;
+	justify-content: flex-end;
+	align-items: center;
+	padding: 0.6rem 1.25rem;
+	background: var(--bg-base);
+	border-bottom: 1px solid var(--border);
+}
+
+.audience-toggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	padding: 3px;
+	background: var(--bg-elevated);
+	border: 1px solid var(--border);
+	border-radius: 999px;
+}
+
+.audience-toggle-btn {
+	font-family: var(--font-body);
+	font-size: 0.78rem;
+	font-weight: 600;
+	color: var(--text-secondary);
+	background: transparent;
+	border: none;
+	border-radius: 999px;
+	padding: 0.35rem 0.75rem;
+	cursor: pointer;
+	transition: background 0.15s, color 0.15s;
+}
+
+.audience-toggle-btn:hover {
+	color: var(--text-primary);
+}
+
+.audience-toggle-btn.active {
+	background: var(--verde);
+	color: var(--text-inverse);
+}
+
+.audience-toggle-btn:disabled {
+	cursor: default;
+	opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+	.topbar { padding: 0.6rem 1rem; }
+	.audience-toggle-btn { font-size: 0.72rem; padding: 0.3rem 0.55rem; }
+}
+
 /* Mobile: bottom nav */
 @media (max-width: 768px) {
 	.sidebar { display: none; }

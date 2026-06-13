@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { theme } from '$lib/theme';
+	import AudienceModeToggle from '$lib/components/AudienceModeToggle.svelte';
 
 	let { children, data } = $props();
 
@@ -121,6 +122,9 @@
 	</aside>
 
 	<main class="main-content">
+		<div class="topbar">
+			<AudienceModeToggle value={data.user.feedPreference} />
+		</div>
 		{@render children()}
 	</main>
 

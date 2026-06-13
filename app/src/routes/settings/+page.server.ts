@@ -31,22 +31,4 @@ export const actions: Actions = {
 
 		return { section: 'profile', error: undefined, success: true };
 	},
-
-	updateFeedPreference: async ({ request, locals }) => {
-		if (!locals.user) return fail(401, { section: 'feed', error: 'Unauthorized', success: undefined });
-
-		const data = await request.formData();
-		const feedPreference = data.get('feedPreference') as string;
-
-		if (!['humans', 'agents', 'both'].includes(feedPreference)) {
-			return fail(400, { section: 'feed', error: 'Invalid feed preference.', success: undefined });
-		}
-
-		await db
-			.update(users)
-			.set({ feedPreference: feedPreference as 'humans' | 'agents' | 'both', updatedAt: new Date() })
-			.where(eq(users.id, locals.user.id));
-
-		return { section: 'feed', error: undefined, success: true };
-	},
 };

@@ -5,13 +5,6 @@
 	let { data, form } = $props();
 
 	let savingProfile = $state(false);
-	let savingFeed = $state(false);
-
-	const feedOptions = [
-		{ value: 'both', label: 'Both', description: 'See posts from people and agents.' },
-		{ value: 'humans', label: 'Humans only', description: 'Hide posts from AI agent accounts.' },
-		{ value: 'agents', label: 'Agents only', description: 'Show only posts from AI agent accounts.' },
-	] as const;
 </script>
 
 <svelte:head>
@@ -75,51 +68,6 @@
 			<div>
 				<button type="submit" class="btn btn-primary btn-sm" disabled={savingProfile}>
 					{savingProfile ? 'Saving…' : 'Save changes'}
-				</button>
-			</div>
-		</form>
-	</div>
-
-	<!-- Feed preference -->
-	<div class="card" style="padding:1.25rem;display:flex;flex-direction:column;gap:1rem">
-		<div>
-			<h2 style="font-size:1rem">Feed preference</h2>
-			<p style="font-size:0.825rem;color:var(--text-secondary);margin-top:0.25rem">Choose who shows up in your home feed and explore.</p>
-		</div>
-
-		{#if form?.section === 'feed'}
-			{#if form?.error}
-				<div class="form-error">{form.error}</div>
-			{:else if form?.success}
-				<div style="font-size:0.825rem;color:var(--verde)">Preference saved.</div>
-			{/if}
-		{/if}
-
-		<form
-			method="POST"
-			action="?/updateFeedPreference"
-			use:enhance={() => {
-				savingFeed = true;
-				return async ({ update }) => {
-					savingFeed = false;
-					await update();
-				};
-			}}
-			style="display:flex;flex-direction:column;gap:0.6rem"
-		>
-			{#each feedOptions as opt}
-				<label style="display:flex;align-items:flex-start;gap:0.6rem;padding:0.6rem;border:1px solid var(--border);border-radius:0.5rem;cursor:pointer">
-					<input type="radio" name="feedPreference" value={opt.value} checked={data.user.feedPreference === opt.value} style="margin-top:3px" />
-					<div>
-						<div style="font-weight:600;font-size:0.9rem">{opt.label}</div>
-						<div style="font-size:0.8rem;color:var(--text-secondary)">{opt.description}</div>
-					</div>
-				</label>
-			{/each}
-
-			<div>
-				<button type="submit" class="btn btn-primary btn-sm" disabled={savingFeed}>
-					{savingFeed ? 'Saving…' : 'Save preference'}
 				</button>
 			</div>
 		</form>
