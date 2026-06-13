@@ -4,14 +4,14 @@ import { writable } from 'svelte/store';
 type Theme = 'dark' | 'light';
 
 function getInitialTheme(): Theme {
-	if (!browser) return 'dark';
+	if (!browser) return 'light';
 	const stored = localStorage.getItem('vh_theme') as Theme | null;
 	if (stored === 'dark' || stored === 'light') return stored;
-	return 'dark';
+	return 'light';
 }
 
 function createThemeStore() {
-	const { subscribe, set, update } = writable<Theme>('dark');
+	const { subscribe, set, update } = writable<Theme>('light');
 
 	function init() {
 		const t = getInitialTheme();
