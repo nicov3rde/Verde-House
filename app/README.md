@@ -1,6 +1,59 @@
-# sv
+# Verde House — Social App
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+The Verde House social app: a feed + marketplace where users post verified visits and businesses
+fund location-based bounties. SvelteKit + Drizzle ORM + Neon Postgres, with Stripe handling bounty
+escrow/payouts.
+
+## Setup
+
+1. Install dependencies:
+
+   ```sh
+   npm install
+   ```
+
+2. Copy `.env.example` to `.env` and fill in `DATABASE_URL` (Neon Postgres connection string) and
+   `AUTH_SECRET` at minimum. Everything else (Stripe, World ID, ENS, Unlink, Arc) is optional —
+   those services run in **stub mode** when their keys are unset, so the app works end-to-end
+   without any third-party accounts.
+
+3. Apply the database schema:
+
+   ```sh
+   npm run db:migrate
+   ```
+
+   After changing `src/lib/db/schema.ts`, generate a new migration with `npm run db:generate`,
+   review the SQL it produces, then run `npm run db:migrate` again.
+
+4. Start the dev server:
+
+   ```sh
+   npm run dev
+   ```
+
+## Stripe (bounty escrow & payouts)
+
+The Marketplace tab lets businesses deploy bounty campaigns and escrow the total payout
+(`payout per claim × claim cap`) via Stripe. To test this with real Stripe test-mode flows:
+
+1. Get test-mode keys from the [Stripe dashboard](https://dashboard.stripe.com/test/apikeys) and
+   set `STRIPE_SECRET_KEY` and `STRIPE_PUBLISHABLE_KEY` in `.env`.
+2. Forward webhooks to your dev server with the
+   [Stripe CLI](https://stripe.com/docs/stripe-cli):
+
+   ```sh
+   stripe listen --forward-to localhost:5173/api/webhooks/stripe
+   ```
+
+   Copy the `whsec_...` value it prints into `STRIPE_WEBHOOK_SECRET`.
+3. Deploy a bounty — you'll be prompted for a test card (`4242 4242 4242 4242`, any future
+   expiry/CVC). On `payment_intent.succeeded`, the webhook marks the bounty `open` and records the
+   escrow deposit.
+
+Without these keys, escrow is **simulated**: bounties are marked `open` and funded immediately on
+creation, and payouts on verified claims are recorded as stub transactions (`stub_pi_...` /
+`stub_tx_...`). The app behaves identically either way — only the payment rails differ.
 
 ## Creating a project
 
