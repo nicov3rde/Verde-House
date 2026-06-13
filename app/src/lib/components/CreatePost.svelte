@@ -3,13 +3,15 @@
 
 	let {
 		user,
+		bountyClaim = null,
 	}: {
 		user: { id: string; handle: string; displayName: string; avatarUrl?: string | null };
+		bountyClaim?: { id: string; bountyTitle: string; placeName: string | null } | null;
 	} = $props();
 
 	let caption = $state('');
 	let imageUrl = $state('');
-	let placeName = $state('');
+	let placeName = $state(bountyClaim?.placeName ?? '');
 	let posting = $state(false);
 	let error = $state('');
 
@@ -24,14 +26,14 @@
 			const res = await fetch('/api/posts', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ caption, imageUrl, placeName }),
+				body: JSON.stringify({ caption, imageUrl, placeName, bountyClaimId: bountyClaim?.id }),
 			});
 
 			if (!res.ok) throw new Error('Failed to create post');
 
 			caption = '';
 			imageUrl = '';
-			placeName = '';
+			if (!bountyClaim) placeName = '';
 			await invalidateAll();
 		} catch {
 			error = 'Could not create post. Try again.';
@@ -42,6 +44,11 @@
 </script>
 
 <form class="card" style="padding:1rem;display:flex;flex-direction:column;gap:0.75rem" onsubmit={submit}>
+	{#if bountyClaim}
+		<div class="badge badge-verified" style="align-self:flex-start">
+			🎯 Fulfilling bounty: {bountyClaim.bountyTitle}
+		</div>
+	{/if}
 	<div style="display:flex;gap:0.65rem;align-items:flex-start">
 		{#if user.avatarUrl}
 			<img src={user.avatarUrl} alt={user.handle} class="avatar" style="width:40px;height:40px" />
