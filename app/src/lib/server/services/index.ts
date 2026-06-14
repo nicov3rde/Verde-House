@@ -2,7 +2,7 @@ import { worldId } from './worldId';
 import { ens } from './ens';
 import { unlink } from './unlink';
 import { arc } from './arc';
-import { computeReliabilityScore, type ExpertisePost, type ReliabilityClaim } from './reliability';
+import { computeReliabilityScore, computeAuthorityScore, type ExpertisePost, type ReliabilityClaim, type AuthorityScoreInput } from './reliability';
 
 export { worldId, ens, unlink, arc };
 
@@ -15,7 +15,12 @@ type ChainProfileUser = {
 };
 
 /** Aggregates all chain/identity service data needed to render a profile. */
-export function getChainProfile(user: ChainProfileUser, posts: ExpertisePost[], bountyClaims: ReliabilityClaim[] = []) {
+export function getChainProfile(
+	user: ChainProfileUser,
+	posts: ExpertisePost[],
+	bountyClaims: ReliabilityClaim[] = [],
+	authorityInput: AuthorityScoreInput = { postRankSum: 0, vouchesReceived: 0, vouchesGiven: 0 },
+) {
 	return {
 		worldId: worldId.getStatus(user),
 		ens: {
@@ -25,5 +30,6 @@ export function getChainProfile(user: ChainProfileUser, posts: ExpertisePost[], 
 		unlink: unlink.getWalletStatus(user),
 		arc: arc.getNetworkInfo(),
 		reliability: computeReliabilityScore(user, posts, bountyClaims),
+		authority: computeAuthorityScore(authorityInput),
 	};
 }

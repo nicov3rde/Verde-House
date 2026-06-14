@@ -12,17 +12,32 @@
 	});
 
 	const navItems = [
-		{ href: '/', label: 'Home', icon: 'home' },
+		{ href: '/home', label: 'Home', icon: 'home' },
 		{ href: '/explore', label: 'Explore', icon: 'explore' },
 		{ href: '/messages', label: 'Messages', icon: 'messages' },
 		{ href: '/marketplace', label: 'Marketplace', icon: 'marketplace' },
 		{ href: '/notifications', label: 'Notifications', icon: 'bell' },
+		{ href: '/reels', label: 'Reels', icon: 'reels' },
+		{ href: '/trending', label: 'Trending', icon: 'trending' },
 		{ href: '/settings', label: 'Settings', icon: 'settings' },
 	];
 
+	const guestNavItems = [
+		{ href: '/explore', label: 'Explore', icon: 'explore' },
+		{ href: '/marketplace', label: 'Marketplace', icon: 'marketplace' },
+		{ href: '/trending', label: 'Trending', icon: 'trending' },
+		{ href: '/reels', label: 'Reels', icon: 'reels' },
+	];
+
+	// Routes that are browsable without an account ("the network").
+	const guestShellPrefixes = ['/explore', '/marketplace', '/trending', '/reels', '/u/'];
+
 	function isActive(href: string) {
-		if (href === '/') return $page.url.pathname === '/';
-		return $page.url.pathname.startsWith(href);
+		return $page.url.pathname === href || $page.url.pathname.startsWith(`${href}/`);
+	}
+
+	function isGuestShellRoute(pathname: string) {
+		return guestShellPrefixes.some((p) => pathname === p || pathname.startsWith(p));
 	}
 
 	function profileHref() {
@@ -59,6 +74,18 @@
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
 {/snippet}
 
+{#snippet reelsIcon()}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>
+{/snippet}
+
+{#snippet trendingIcon()}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+{/snippet}
+
+{#snippet devIcon()}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+{/snippet}
+
 {#snippet iconFor(name: string)}
 	{#if name === 'home'}{@render homeIcon()}
 	{:else if name === 'explore'}{@render exploreIcon()}
@@ -67,6 +94,9 @@
 	{:else if name === 'bell'}{@render bellIcon()}
 	{:else if name === 'profile'}{@render profileIcon()}
 	{:else if name === 'settings'}{@render settingsIcon()}
+	{:else if name === 'reels'}{@render reelsIcon()}
+	{:else if name === 'trending'}{@render trendingIcon()}
+	{:else if name === 'dev'}{@render devIcon()}
 	{/if}
 {/snippet}
 
@@ -75,7 +105,7 @@
 <div class="app-layout">
 	<!-- Desktop left sidebar -->
 	<aside class="sidebar">
-		<a href="/" class="sidebar-logo">
+		<a href="/home" class="sidebar-logo">
 			<span class="verde">Verde</span> House
 		</a>
 
@@ -94,6 +124,12 @@
 					{/if}
 				</a>
 			{/each}
+			{#if data.isDeveloper}
+				<a href="/admin" class="nav-item" class:active={isActive('/admin')}>
+					{@render devIcon()}
+					Developer
+				</a>
+			{/if}
 		</nav>
 
 		<div class="sidebar-user">
@@ -142,7 +178,67 @@
 	</nav>
 </div>
 
+{:else if isGuestShellRoute($page.url.pathname)}
+<!-- Guest app shell: browse the network without an account -->
+<div class="app-layout">
+	<!-- Desktop left sidebar -->
+	<aside class="sidebar">
+		<a href="/" class="sidebar-logo">
+			<span class="verde">Verde</span> House
+		</a>
+
+		<nav class="sidebar-nav">
+			{#each guestNavItems as item}
+				<a href={item.href} class="nav-item" class:active={isActive(item.href)}>
+					{@render iconFor(item.icon)}
+					{item.label}
+				</a>
+			{/each}
+		</nav>
+
+		<div class="sidebar-user">
+			<a href="/auth/login" class="btn btn-secondary btn-sm" style="flex:1;text-align:center">Sign in</a>
+			<a href="/auth/register" class="btn btn-primary btn-sm" style="flex:1;text-align:center">Sign up</a>
+			<button
+				onclick={() => theme.toggle()}
+				class="btn btn-icon btn-ghost"
+				title="Toggle theme"
+				style="padding:0.35rem"
+			>
+				{#if $theme === 'dark'}
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+				{:else}
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+				{/if}
+			</button>
+		</div>
+	</aside>
+
+	<main class="main-content">
+		<div class="topbar">
+			<div style="font-size:0.85rem;color:var(--text-secondary)">
+				Browsing as guest · <a href="/auth/login" style="color:var(--verde)">Sign in</a> to post, like, or claim bounties.
+			</div>
+		</div>
+		{@render children()}
+	</main>
+
+	<!-- Mobile bottom nav -->
+	<nav class="bottom-nav">
+		{#each guestNavItems as item}
+			<a href={item.href} class="bottom-nav-item" class:active={isActive(item.href)}>
+				<div style="width:22px;height:22px">{@render iconFor(item.icon)}</div>
+				{item.label}
+			</a>
+		{/each}
+		<a href="/auth/login" class="bottom-nav-item" class:active={isActive('/auth/login')}>
+			<div style="width:22px;height:22px">{@render profileIcon()}</div>
+			Sign in
+		</a>
+	</nav>
+</div>
+
 {:else}
-<!-- Unauthenticated: render without shell -->
+<!-- Unauthenticated, non-network route (landing, auth pages): render without shell -->
 {@render children()}
 {/if}

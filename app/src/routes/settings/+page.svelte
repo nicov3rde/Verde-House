@@ -5,6 +5,36 @@
 	let { data, form } = $props();
 
 	let savingProfile = $state(false);
+	let avatarUrl = $state(data.user.avatarUrl ?? '');
+	let avatarUploading = $state(false);
+	let avatarError = $state('');
+
+	async function onAvatarSelected(e: Event) {
+		const input = e.currentTarget as HTMLInputElement;
+		const file = input.files?.[0];
+		if (!file) return;
+
+		avatarUploading = true;
+		avatarError = '';
+		try {
+			const body = new FormData();
+			body.append('file', file);
+
+			const res = await fetch('/api/media/upload', { method: 'POST', body });
+			if (!res.ok) {
+				const data = await res.json().catch(() => null);
+				throw new Error(data?.message ?? 'Upload failed');
+			}
+
+			const result = await res.json();
+			avatarUrl = result.url;
+		} catch (err) {
+			avatarError = err instanceof Error ? err.message : 'Upload failed';
+		} finally {
+			avatarUploading = false;
+			input.value = '';
+		}
+	}
 </script>
 
 <svelte:head>
@@ -39,16 +69,32 @@
 			style="display:flex;flex-direction:column;gap:1rem"
 		>
 			<div style="display:flex;gap:1rem;align-items:center">
-				{#if data.user.avatarUrl}
-					<img src={data.user.avatarUrl} alt={data.user.handle} class="avatar" style="width:56px;height:56px" />
+				{#if avatarUrl}
+					<img src={avatarUrl} alt={data.user.handle} class="avatar" style="width:56px;height:56px" />
 				{:else}
 					<div class="avatar-placeholder" style="width:56px;height:56px;font-size:1.3rem">{data.user.displayName[0]}</div>
 				{/if}
-				<div>
+				<div style="flex:1">
 					<div style="font-weight:700">{data.user.displayName}</div>
 					<div style="font-size:0.8rem;color:var(--text-muted)">@{data.user.handle}</div>
 				</div>
+				<label class="btn btn-secondary btn-sm" style="cursor:pointer">
+					{avatarUploading ? 'Uploading…' : 'Change photo'}
+					<input
+						type="file"
+						accept="image/*"
+						onchange={onAvatarSelected}
+						disabled={avatarUploading}
+						style="display:none"
+					/>
+				</label>
 			</div>
+
+			{#if avatarError}
+				<div class="form-error">{avatarError}</div>
+			{/if}
+
+			<input type="hidden" name="avatarUrl" value={avatarUrl} />
 
 			<div class="form-group">
 				<label class="form-label" for="displayName">Display name</label>
@@ -58,11 +104,6 @@
 			<div class="form-group">
 				<label class="form-label" for="bio">Bio</label>
 				<textarea class="input" id="bio" name="bio" rows="3" placeholder="Tell people what you're about">{data.user.bio ?? ''}</textarea>
-			</div>
-
-			<div class="form-group">
-				<label class="form-label" for="avatarUrl">Avatar URL</label>
-				<input class="input" id="avatarUrl" name="avatarUrl" type="url" placeholder="https://..." value={data.user.avatarUrl ?? ''} />
 			</div>
 
 			<div>
@@ -82,6 +123,21 @@
 		<button onclick={() => theme.toggle()} class="btn btn-secondary btn-sm">
 			{$theme === 'dark' ? 'Switch to light' : 'Switch to dark'}
 		</button>
+	</div>
+
+	<!-- Privacy -->
+	<div class="card" style="padding:1.25rem;display:flex;align-items:center;justify-content:space-between;gap:1rem">
+		<div>
+			<h2 style="font-size:1rem">Privacy</h2>
+			<p style="font-size:0.825rem;color:var(--text-secondary);margin-top:0.25rem">
+				Shielded Balances (Unlink): hide your total bounty earnings from your profile's page data.
+			</p>
+		</div>
+		<form method="POST" action="?/togglePrivacy" use:enhance>
+			<button type="submit" class="btn btn-secondary btn-sm">
+				{data.user.earningsPrivate ? 'Privacy: On' : 'Privacy: Off'}
+			</button>
+		</form>
 	</div>
 
 	<!-- Account -->

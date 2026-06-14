@@ -1,13 +1,12 @@
 import type { PageServerLoad } from './$types';
-import { error, redirect } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import { bounties, bountyClaims, users, posts } from '$lib/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import { verification } from '$lib/server/services/verification';
+import { getUserVouches } from '$lib/server/ranking';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
-	if (!locals.user) throw redirect(302, '/auth/login');
-
 	const [row] = await db
 		.select({
 			bounty: bounties,
@@ -30,6 +29,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			fulfillmentPostId: bountyClaims.fulfillmentPostId,
 			agentVerified: bountyClaims.agentVerified,
 			agentNotes: bountyClaims.agentNotes,
+			vouchCount: bountyClaims.vouchCount,
 			user: {
 				id: users.id,
 				handle: users.handle,
@@ -55,13 +55,21 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		.where(eq(bountyClaims.bountyId, params.id))
 		.orderBy(desc(bountyClaims.acceptedAt));
 
-	const myClaim = claimRows.find((c) => c.user.id === locals.user!.id) ?? null;
-	const isCreator = locals.user.id === row.bounty.creatorId;
+	const myClaim = locals.user ? claimRows.find((c) => c.user.id === locals.user!.id) ?? null : null;
+	const isCreator = locals.user ? locals.user.id === row.bounty.creatorId : false;
+
+	// This user's existing vouches, for pending claims that aren't their own.
+	let myVouches = new Set<string>();
+	if (locals.user) {
+		const vouchableIds = claimRows.filter((c) => c.status === 'pending' && c.user.id !== locals.user!.id).map((c) => c.id);
+		myVouches = await getUserVouches(locals.user.id, vouchableIds);
+	}
 
 	// Give the creator a live preview of the agent verification check before
 	// they decide on each pending submission.
 	const claims = await Promise.all(
 		claimRows.map(async (claim) => {
+			const withVouch = { ...claim, vouched: myVouches.has(claim.id) };
 			if (isCreator && claim.status === 'pending' && claim.post) {
 				const agentCheck = await verification.checkClaim({
 					id: claim.post.id,
@@ -71,13 +79,11 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 					imageUrl: claim.post.imageUrl,
 					videoUrl: claim.post.videoUrl,
 				});
-				return { ...claim, agentCheck };
+				return { ...withVouch, agentCheck };
 			}
-			return { ...claim, agentCheck: null };
+			return { ...withVouch, agentCheck: null };
 		}),
 	);
-
-	const { passwordHash, email, ...safeUser } = locals.user;
 
 	return {
 		bounty: {
@@ -89,6 +95,5 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		claims,
 		myClaim,
 		isCreator,
-		user: safeUser,
 	};
 };

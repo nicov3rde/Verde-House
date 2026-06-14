@@ -114,3 +114,41 @@ export function computeReliabilityScore(user: ReliabilityUser, posts: ExpertiseP
 		breakdown: { worldId, accountAge, verifiedVisits, bountiesPaid },
 	};
 }
+
+export interface AuthorityScoreInput {
+	/** Sum of `posts.rank_score` across all of the user's posts (net upvotes). */
+	postRankSum: number;
+	/** Sum of `bounty_claims.vouch_count` across all of the user's claims. */
+	vouchesReceived: number;
+	/** Count of `vouches` rows where this user is the voucher. */
+	vouchesGiven: number;
+}
+
+export interface AuthorityScore {
+	total: number;
+	breakdown: {
+		postRank: number;
+		vouchesReceived: number;
+		vouchesGiven: number;
+	};
+}
+
+/**
+ * Authority Score (0-100) — the Peer Ranking Engine's measure of how much
+ * the community trusts this user's posts and bounty-claim submissions:
+ *  - Net post rank (sum of post_ranks votes across all posts): +2 per net
+ *    upvote, capped at +50
+ *  - Vouches received on bounty claims: +10 each, capped at +30
+ *  - Vouches given to others' claims: +2 each, capped at +20 (rewards active
+ *    participation in peer review)
+ */
+export function computeAuthorityScore(input: AuthorityScoreInput): AuthorityScore {
+	const postRank = Math.max(0, Math.min(50, input.postRankSum * 2));
+	const vouchesReceived = Math.min(30, input.vouchesReceived * 10);
+	const vouchesGiven = Math.min(20, input.vouchesGiven * 2);
+
+	return {
+		total: Math.min(100, postRank + vouchesReceived + vouchesGiven),
+		breakdown: { postRank, vouchesReceived, vouchesGiven },
+	};
+}

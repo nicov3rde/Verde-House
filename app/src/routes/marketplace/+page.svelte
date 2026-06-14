@@ -48,11 +48,21 @@
 		</div>
 	</div>
 
-	<BountyCreatorForm
-		currentUser={data.currentUser}
-		paymentsMode={data.paymentsMode}
-		stripePublishableKey={data.stripePublishableKey}
-	/>
+	{#if data.currentUser}
+		<BountyCreatorForm
+			currentUser={data.currentUser}
+			paymentsMode={data.paymentsMode}
+			stripePublishableKey={data.stripePublishableKey}
+		/>
+	{:else}
+		<div class="card" style="padding:1.25rem;text-align:center">
+			<h2 style="font-size:1.05rem;margin-bottom:0.35rem">🚀 Deploy a Bounty Campaign</h2>
+			<p class="text-secondary" style="font-size:0.85rem;margin-bottom:0.85rem">
+				<a href="/auth/login" style="color:var(--verde)">Sign in</a> to fund escrow and post a bounty for scouts.
+			</p>
+			<a href="/auth/login" class="btn btn-primary">Sign in to deploy a bounty</a>
+		</div>
+	{/if}
 
 	<div class="card" style="padding:1.25rem">
 		<h2 style="font-size:1.05rem;margin-bottom:0.75rem">Active Bounty Ledger</h2>

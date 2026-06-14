@@ -1,10 +1,9 @@
 import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
 import { db } from '$lib/db';
-import { bounties, bountyClaims, users, notifications, posts } from '$lib/db/schema';
+import { bounties, bountyClaims } from '$lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { payments } from '$lib/server/services/payments';
-import { verification } from '$lib/server/services/verification';
+import { resolveClaim } from '$lib/server/claims';
 
 export const POST: RequestHandler = async ({ params, request, locals }) => {
 	if (!locals.user) throw error(401, 'Unauthorized');
@@ -18,50 +17,7 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 
 	const [claim] = await db.select().from(bountyClaims).where(eq(bountyClaims.id, params.claimId)).limit(1);
 	if (!claim || claim.bountyId !== bounty.id) throw error(404, 'Claim not found');
-	if (claim.status !== 'pending') throw error(400, 'Claim has already been reviewed');
-	if (!claim.fulfillmentPostId) throw error(400, 'This claim has no fulfillment post yet');
 
-	const [fulfillmentPost] = await db.select().from(posts).where(eq(posts.id, claim.fulfillmentPostId)).limit(1);
-	if (!fulfillmentPost) throw error(404, 'Fulfillment post not found');
-
-	const agentCheck = await verification.checkClaim(fulfillmentPost);
-
-	if (action === 'reject') {
-		await db
-			.update(bountyClaims)
-			.set({ status: 'rejected', verifiedAt: new Date(), agentVerified: agentCheck.verified, agentNotes: agentCheck.notes })
-			.where(eq(bountyClaims.id, claim.id));
-
-		await db.insert(notifications).values({
-			recipientId: claim.userId,
-			actorId: locals.user.id,
-			type: 'bounty_rejected',
-			message: `Your submission for "${bounty.title}" was not approved.`,
-		});
-
-		return json({ status: 'rejected' });
-	}
-
-	await db
-		.update(bountyClaims)
-		.set({ status: 'verified', verifiedAt: new Date(), agentVerified: agentCheck.verified, agentNotes: agentCheck.notes })
-		.where(eq(bountyClaims.id, claim.id));
-
-	const [claimant] = await db.select().from(users).where(eq(users.id, claim.userId)).limit(1);
-
-	await payments.releasePayout({
-		claimId: claim.id,
-		userId: claim.userId,
-		amountUsdc: bounty.rewardUsdc,
-		private: claimant?.earningsPrivate ?? true,
-	});
-
-	await db.insert(notifications).values({
-		recipientId: claim.userId,
-		actorId: locals.user.id,
-		type: 'bounty_paid',
-		message: `You were paid $${bounty.rewardUsdc.toFixed(2)} USDC for "${bounty.title}".`,
-	});
-
-	return json({ status: 'paid' });
+	const result = await resolveClaim(claim.id, action, locals.user.id);
+	return json({ status: result.status });
 };

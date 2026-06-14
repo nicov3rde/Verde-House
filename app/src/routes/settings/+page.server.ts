@@ -31,4 +31,15 @@ export const actions: Actions = {
 
 		return { section: 'profile', error: undefined, success: true };
 	},
+
+	togglePrivacy: async ({ locals }) => {
+		if (!locals.user) return fail(401, { section: 'privacy', error: 'Unauthorized', success: undefined });
+
+		await db
+			.update(users)
+			.set({ earningsPrivate: !locals.user.earningsPrivate, updatedAt: new Date() })
+			.where(eq(users.id, locals.user.id));
+
+		return { section: 'privacy', error: undefined, success: true };
+	},
 };

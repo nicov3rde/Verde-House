@@ -2,10 +2,11 @@ import type { LayoutServerLoad } from './$types';
 import { db } from '$lib/db';
 import { notifications, conversations, messages } from '$lib/db/schema';
 import { eq, and, or, inArray, ne } from 'drizzle-orm';
+import { isDeveloper } from '$lib/server/admin';
 
 export const load: LayoutServerLoad = async ({ locals }) => {
 	if (!locals.user) {
-		return { user: null, unreadNotifications: 0, unreadMessages: 0 };
+		return { user: null, unreadNotifications: 0, unreadMessages: 0, isDeveloper: false };
 	}
 
 	let unreadNotifications = 0;
@@ -49,5 +50,6 @@ export const load: LayoutServerLoad = async ({ locals }) => {
 		user: safeUser,
 		unreadNotifications,
 		unreadMessages,
+		isDeveloper: isDeveloper(locals.user),
 	};
 };

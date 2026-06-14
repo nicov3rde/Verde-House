@@ -25,3 +25,6 @@ vite.config.ts.timestamp-*
 # Stub media uploads (dev-only, not for production storage)
 /static/uploads/*
 !/static/uploads/.gitkeep
+
+.vercel
+.env*

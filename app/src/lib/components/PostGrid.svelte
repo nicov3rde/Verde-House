@@ -6,7 +6,7 @@
 		currentUserId,
 	}: {
 		posts: any[];
-		currentUserId: string;
+		currentUserId?: string;
 	} = $props();
 
 	let activePost = $state<any | null>(null);

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
+	import { invalidateAll, goto } from '$app/navigation';
 	import CommentSection from './CommentSection.svelte';
 
 	let {
@@ -8,15 +8,18 @@
 		currentUserId,
 	}: {
 		post: any;
-		currentUserId: string;
+		currentUserId?: string;
 	} = $props();
 
 	let liked = $state(post.liked ?? false);
 	let likeCount = $state(post.likeCount ?? 0);
 	let saved = $state(post.saved ?? false);
 	let showComments = $state(false);
+	let userRank = $state(post.userRank ?? 0);
+	let rankScore = $state(post.rankScore ?? 0);
 
 	async function toggleLike() {
+		if (!currentUserId) return goto('/auth/login');
 		liked = !liked;
 		likeCount += liked ? 1 : -1;
 
@@ -25,7 +28,31 @@
 		});
 	}
 
+	async function vote(value: 1 | -1) {
+		if (!currentUserId) return goto('/auth/login');
+		const prevRank = userRank;
+		const prevScore = rankScore;
+		userRank = userRank === value ? 0 : value;
+		rankScore += userRank - prevRank;
+
+		try {
+			const res = await fetch(`/api/posts/${post.id}/rank`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ value }),
+			});
+			if (!res.ok) throw new Error('Failed to vote');
+			const data = await res.json();
+			rankScore = data.rankScore;
+			userRank = data.userRank;
+		} catch {
+			userRank = prevRank;
+			rankScore = prevScore;
+		}
+	}
+
 	async function toggleSave() {
+		if (!currentUserId) return goto('/auth/login');
 		saved = !saved;
 		await fetch(`/api/posts/${post.id}/save`, {
 			method: saved ? 'POST' : 'DELETE',
@@ -100,6 +127,16 @@
 
 	<!-- Actions -->
 	<div style="display:flex;align-items:center;gap:0.25rem;padding:0.35rem 0.5rem;border-top:1px solid var(--border)">
+		<div class="rank-control" title="Peer ranking">
+			<button onclick={() => vote(1)} class="btn btn-ghost btn-sm btn-icon" class:rank-active-up={userRank === 1} title="Upvote">
+				<svg width="14" height="14" viewBox="0 0 24 24" fill={userRank === 1 ? 'currentColor' : 'none'} stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+			</button>
+			<span class="rank-score" class:rank-active-up={userRank === 1} class:rank-active-down={userRank === -1}>{rankScore}</span>
+			<button onclick={() => vote(-1)} class="btn btn-ghost btn-sm btn-icon" class:rank-active-down={userRank === -1} title="Downvote">
+				<svg width="14" height="14" viewBox="0 0 24 24" fill={userRank === -1 ? 'currentColor' : 'none'} stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+			</button>
+		</div>
+
 		<button onclick={toggleLike} class="btn btn-ghost btn-sm btn-icon" style="gap:0.35rem;font-size:0.85rem" title="Like">
 			{#if liked}
 				<svg width="18" height="18" viewBox="0 0 24 24" fill="#ff4757"><path d="M12 21.593c-5.63-5.539-11-10.297-11-14.402 0-3.791 3.068-5.191 5.281-5.191 1.312 0 4.151.501 5.719 4.457 1.59-3.968 4.464-4.447 5.726-4.447 2.54 0 5.274 1.621 5.274 5.181 0 4.069-5.136 8.625-11 14.402z"/></svg>

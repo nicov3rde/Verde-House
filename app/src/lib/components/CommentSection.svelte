@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
 
 	let {
 		postId,
@@ -8,7 +9,7 @@
 	}: {
 		postId: string;
 		commentCount: number;
-		currentUserId: string;
+		currentUserId?: string;
 	} = $props();
 
 	type Comment = {
@@ -39,6 +40,7 @@
 
 	async function submit(e: Event) {
 		e.preventDefault();
+		if (!currentUserId) return goto('/auth/login');
 		if (!body.trim()) return;
 
 		posting = true;

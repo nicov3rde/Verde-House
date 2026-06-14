@@ -1,5 +1,4 @@
 import type { PageServerLoad } from './$types';
-import { redirect } from '@sveltejs/kit';
 import { db } from '$lib/db';
 import { bounties, bountyClaims, transactions, users } from '$lib/db/schema';
 import { eq, desc, gte, and, inArray, sql } from 'drizzle-orm';
@@ -7,9 +6,7 @@ import { stripe } from '$lib/server/services/stripe';
 import { payments } from '$lib/server/services/payments';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (!locals.user) throw redirect(302, '/auth/login');
-
-	const feedPref = locals.user.feedPreference;
+	const feedPref = locals.user?.feedPreference ?? 'both';
 	const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
 	const [totalCampaigns, newThisWeek, verifiedClaims, humanVerifiedClaims, payoutAgg, privatePayoutAgg, ledgerRows] =
@@ -81,10 +78,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 		})),
 		paymentsMode: payments.mode,
 		stripePublishableKey: stripe.publishableKey,
-		currentUser: {
-			id: locals.user.id,
-			businessName: locals.user.businessName,
-			displayName: locals.user.displayName,
-		},
+		currentUser: locals.user
+			? {
+					id: locals.user.id,
+					businessName: locals.user.businessName,
+					displayName: locals.user.displayName,
+				}
+			: null,
 	};
 };

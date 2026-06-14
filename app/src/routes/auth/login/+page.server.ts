@@ -7,7 +7,7 @@ import bcrypt from 'bcryptjs';
 import { createSession, setSessionCookie } from '$lib/auth';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	if (locals.user) throw redirect(302, '/');
+	if (locals.user) throw redirect(302, '/home');
 	return {};
 };
 
@@ -35,6 +35,6 @@ export const actions: Actions = {
 		const { id: sessionId, expiresAt } = await createSession(user.id);
 		setSessionCookie(event, sessionId, expiresAt);
 
-		throw redirect(302, '/');
+		throw redirect(302, '/home');
 	}
 };

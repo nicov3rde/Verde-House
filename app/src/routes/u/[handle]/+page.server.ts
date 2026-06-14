@@ -1,13 +1,12 @@
 import type { PageServerLoad } from './$types';
-import { error, redirect } from '@sveltejs/kit';
+import { error } from '@sveltejs/kit';
 import { db } from '$lib/db';
-import { users, posts, follows, likes, saves, bountyClaims } from '$lib/db/schema';
-import { eq, and, desc, inArray } from 'drizzle-orm';
-import { getChainProfile } from '$lib/server/services';
+import { users, posts, follows, likes, saves, bountyClaims, transactions, vouches } from '$lib/db/schema';
+import { eq, and, desc, inArray, sql } from 'drizzle-orm';
+import { getChainProfile, unlink } from '$lib/server/services';
+import { getUserPostRanks } from '$lib/server/ranking';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
-	if (!locals.user) throw redirect(302, '/auth/login');
-
 	const [profileUser] = await db
 		.select()
 		.from(users)
@@ -22,17 +21,19 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		.where(eq(posts.authorId, profileUser.id))
 		.orderBy(desc(posts.createdAt));
 
-	const [followerRows, followingRows, claimRows] = await Promise.all([
+	const [followerRows, followingRows, claimRows, vouchesGivenRow] = await Promise.all([
 		db.select().from(follows).where(eq(follows.followingId, profileUser.id)),
 		db.select().from(follows).where(eq(follows.followerId, profileUser.id)),
-		db.select({ status: bountyClaims.status }).from(bountyClaims).where(eq(bountyClaims.userId, profileUser.id)),
+		db.select({ status: bountyClaims.status, vouchCount: bountyClaims.vouchCount }).from(bountyClaims).where(eq(bountyClaims.userId, profileUser.id)),
+		db.select({ count: sql<number>`count(*)` }).from(vouches).where(eq(vouches.voucherId, profileUser.id)),
 	]);
 
 	let isFollowing = false;
 	let userLikes: string[] = [];
 	let userSaves: string[] = [];
+	let userRanks = new Map<string, number>();
 
-	if (locals.user.id !== profileUser.id) {
+	if (locals.user && locals.user.id !== profileUser.id) {
 		const followCheck = await db
 			.select()
 			.from(follows)
@@ -42,7 +43,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	}
 
 	const postIds = userPosts.map((p) => p.id);
-	if (postIds.length > 0) {
+	if (locals.user && postIds.length > 0) {
 		const likeRows = await db
 			.select()
 			.from(likes)
@@ -54,15 +55,32 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			.from(saves)
 			.where(and(eq(saves.userId, locals.user.id), inArray(saves.postId, postIds)));
 		userSaves = saveRows.map((s) => s.postId);
+
+		userRanks = await getUserPostRanks(locals.user.id, postIds);
 	}
 
+	const authorityInput = {
+		postRankSum: userPosts.reduce((sum, p) => sum + p.rankScore, 0),
+		vouchesReceived: claimRows.reduce((sum, c) => sum + c.vouchCount, 0),
+		vouchesGiven: Number(vouchesGivenRow[0]?.count ?? 0),
+	};
+
 	const { passwordHash, email, ...safeUser } = profileUser;
-	const { passwordHash: _viewerHash, ...safeViewer } = locals.user;
+	const isOwnProfile = locals.user?.id === profileUser.id;
+
+	let shieldedBalance = null;
+	if (isOwnProfile) {
+		const payoutRows = await db
+			.select({ amountUsdc: transactions.amountUsdc })
+			.from(transactions)
+			.where(and(eq(transactions.userId, profileUser.id), eq(transactions.type, 'bounty_payout')));
+		const totalEarningsUsdc = payoutRows.reduce((sum, r) => sum + r.amountUsdc, 0);
+		shieldedBalance = unlink.getShieldedBalance(profileUser, totalEarningsUsdc);
+	}
 
 	return {
 		profileUser: safeUser,
-		chainProfile: getChainProfile(profileUser, userPosts, claimRows),
-		user: safeViewer,
+		chainProfile: getChainProfile(profileUser, userPosts, claimRows, authorityInput),
 		posts: userPosts.map((p) => ({
 			...p,
 			author: {
@@ -75,10 +93,12 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			},
 			liked: userLikes.includes(p.id),
 			saved: userSaves.includes(p.id),
+			userRank: userRanks.get(p.id) ?? 0,
 		})),
 		followerCount: followerRows.length,
 		followingCount: followingRows.length,
 		isFollowing,
-		isOwnProfile: locals.user.id === profileUser.id,
+		isOwnProfile,
+		shieldedBalance,
 	};
 };

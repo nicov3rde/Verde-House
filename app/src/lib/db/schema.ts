@@ -21,6 +21,8 @@ export const users = pgTable('users', {
 	avatarUrl: text('avatar_url').default(''),
 	role: userRoleEnum('role').default('user').notNull(),
 	isAgent: boolean('is_agent').default(false).notNull(),
+	// Whether this account (esp. agent accounts) is actively operating — toggled from the developer panel
+	active: boolean('active').default(true).notNull(),
 	// World ID
 	worldIdVerified: boolean('world_id_verified').default(false).notNull(),
 	worldIdNullifier: text('world_id_nullifier').unique(),
@@ -34,6 +36,9 @@ export const users = pgTable('users', {
 	expertiseCoffee: integer('expertise_coffee').default(0),
 	expertiseNightlife: integer('expertise_nightlife').default(0),
 	expertiseGym: integer('expertise_gym').default(0),
+	// Authority Score (0-100, see services/reliability.ts computeAuthorityScore) —
+	// cached here so it can be mirrored to ENS text records alongside expertise.
+	authorityScore: integer('authority_score').default(0).notNull(),
 	// Business info (if role = business)
 	businessName: text('business_name'),
 	businessAddress: text('business_address'),
@@ -80,6 +85,8 @@ export const posts = pgTable('posts', {
 	likeCount: integer('like_count').default(0).notNull(),
 	commentCount: integer('comment_count').default(0).notNull(),
 	saveCount: integer('save_count').default(0).notNull(),
+	// Peer Ranking Engine: net of post_ranks.value (+1/-1) for this post
+	rankScore: integer('rank_score').default(0).notNull(),
 	// Timestamps
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 	updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -109,6 +116,16 @@ export const saves = pgTable('saves', {
 	id: uuid('id').primaryKey().defaultRandom(),
 	userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
 	postId: uuid('post_id').notNull().references(() => posts.id, { onDelete: 'cascade' }),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// ─── Peer Ranking Engine: Post Ranks ────────────────────────────────────────
+
+export const postRanks = pgTable('post_ranks', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	postId: uuid('post_id').notNull().references(() => posts.id, { onDelete: 'cascade' }),
+	value: integer('value').notNull(), // +1 (upvote) or -1 (downvote)
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -197,12 +214,32 @@ export const bountyClaims = pgTable('bounty_claims', {
 	// Agent verification result
 	agentVerified: boolean('agent_verified'),
 	agentNotes: text('agent_notes'),
+	// Immutable receipt: hash of the verification result anchored on Sui (see services/sui.ts)
+	receiptHash: text('receipt_hash'),
+	receiptTxDigest: text('receipt_tx_digest'),
 	// Payment
 	payoutTxHash: text('payout_tx_hash'),
 	paidAt: timestamp('paid_at'),
+	// Arc L1 USDC settlement record for the payout (see services/arc.ts)
+	arcSettlementHash: text('arc_settlement_hash'),
+	arcTxHash: text('arc_tx_hash'),
+	// Peer Ranking Engine: count of vouches (see `vouches` table) from other
+	// users backing this claim ahead of agent/creator review
+	vouchCount: integer('vouch_count').default(0).notNull(),
 	// Timestamps
 	acceptedAt: timestamp('accepted_at').defaultNow().notNull(),
 	verifiedAt: timestamp('verified_at'),
+});
+
+// ─── Peer Ranking Engine: Vouches ───────────────────────────────────────────
+// A vouch is another user staking their own Authority Score on a pending
+// bounty claim being legitimate, ahead of agent/creator review.
+
+export const vouches = pgTable('vouches', {
+	id: uuid('id').primaryKey().defaultRandom(),
+	claimId: uuid('claim_id').notNull().references(() => bountyClaims.id, { onDelete: 'cascade' }),
+	voucherId: uuid('voucher_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+	createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // ─── Sponsored Campaigns ─────────────────────────────────────────────────────
@@ -253,6 +290,8 @@ export const usersRelations = relations(users, ({ many }) => ({
 	notifications: many(notifications),
 	bounties: many(bounties),
 	bountyClaims: many(bountyClaims),
+	postRanks: many(postRanks),
+	vouches: many(vouches),
 }));
 
 export const postsRelations = relations(posts, ({ one, many }) => ({
@@ -260,6 +299,17 @@ export const postsRelations = relations(posts, ({ one, many }) => ({
 	likes: many(likes),
 	saves: many(saves),
 	comments: many(comments),
+	ranks: many(postRanks),
+}));
+
+export const postRanksRelations = relations(postRanks, ({ one }) => ({
+	user: one(users, { fields: [postRanks.userId], references: [users.id] }),
+	post: one(posts, { fields: [postRanks.postId], references: [posts.id] }),
+}));
+
+export const vouchesRelations = relations(vouches, ({ one }) => ({
+	claim: one(bountyClaims, { fields: [vouches.claimId], references: [bountyClaims.id] }),
+	voucher: one(users, { fields: [vouches.voucherId], references: [users.id] }),
 }));
 
 export const followsRelations = relations(follows, ({ one }) => ({
@@ -277,10 +327,11 @@ export const bountiesRelations = relations(bounties, ({ one, many }) => ({
 	claims: many(bountyClaims),
 }));
 
-export const bountyClaimsRelations = relations(bountyClaims, ({ one }) => ({
+export const bountyClaimsRelations = relations(bountyClaims, ({ one, many }) => ({
 	bounty: one(bounties, { fields: [bountyClaims.bountyId], references: [bounties.id] }),
 	user: one(users, { fields: [bountyClaims.userId], references: [users.id] }),
 	fulfillmentPost: one(posts, { fields: [bountyClaims.fulfillmentPostId], references: [posts.id] }),
+	vouches: many(vouches),
 }));
 
 export const conversationsRelations = relations(conversations, ({ one, many }) => ({

@@ -39,3 +39,13 @@ vite.config.*.timestamp-*
 # OS
 .DS_Store
 Thumbs.db
+
+# Claude Code local settings (may contain session cookies / local-only permissions)
+.claude/settings.json
+.claude/settings.local.json
+
+# Nested git worktrees created during agent sessions
+app/.worktrees/
+
+# Playwright MCP debug output
+/.playwright-mcp/

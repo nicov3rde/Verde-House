@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
+	import { invalidateAll, goto } from '$app/navigation';
 	import CreatePost from '$lib/components/CreatePost.svelte';
 
 	let { data } = $props();
@@ -8,6 +8,8 @@
 	let acceptError = $state('');
 	let reviewingId = $state<string | null>(null);
 	let reviewError = $state('');
+	let vouchingId = $state<string | null>(null);
+	let vouches = $state(new Map(data.claims.map((c: any) => [c.id, { vouched: c.vouched, count: c.vouchCount }])));
 
 	const statusLabel: Record<string, string> = {
 		pending_payment: 'Pending Payment',
@@ -42,6 +44,7 @@
 	}
 
 	async function accept() {
+		if (!data.user) return goto('/auth/login');
 		accepting = true;
 		acceptError = '';
 		try {
@@ -55,6 +58,28 @@
 			acceptError = e instanceof Error ? e.message : 'Something went wrong';
 		} finally {
 			accepting = false;
+		}
+	}
+
+	async function vouch(claimId: string) {
+		if (vouchingId) return;
+		vouchingId = claimId;
+		const current = vouches.get(claimId) ?? { vouched: false, count: 0 };
+		const nextVouched = !current.vouched;
+		try {
+			const res = await fetch(`/api/bounties/${data.bounty.id}/claims/${claimId}/vouch`, {
+				method: nextVouched ? 'POST' : 'DELETE',
+			});
+			if (!res.ok) {
+				const d = await res.json().catch(() => ({}));
+				throw new Error(d.message ?? 'Failed to vouch');
+			}
+			const result = await res.json();
+			vouches = new Map(vouches).set(claimId, { vouched: result.vouched, count: result.vouchCount });
+		} catch (e) {
+			reviewError = e instanceof Error ? e.message : 'Something went wrong';
+		} finally {
+			vouchingId = null;
 		}
 	}
 
@@ -120,7 +145,7 @@
 		</div>
 	</div>
 
-	{#if data.myClaim}
+	{#if data.user && data.myClaim}
 		{#if data.myClaim.fulfillmentPostId}
 			<div class="card" style="padding:1.25rem">
 				<h2 style="font-size:1rem;margin-bottom:0.5rem">Your submission</h2>
@@ -191,6 +216,20 @@
 								<span class="badge {claimStatusBadgeClass[claim.status] ?? ''}">{claim.status}</span>
 								{#if claim.post}
 									<a href={`/u/${claim.user.handle}`} class="btn btn-secondary btn-sm">View post</a>
+								{/if}
+								{#if data.user && claim.status === 'pending' && claim.user.id !== data.user.id}
+									{@const v = vouches.get(claim.id) ?? { vouched: false, count: claim.vouchCount }}
+									<button
+										class="btn btn-sm vouch-btn"
+										class:vouch-active={v.vouched}
+										onclick={() => vouch(claim.id)}
+										disabled={vouchingId === claim.id}
+										title="Vouch for this submission ahead of review"
+									>
+										🤝 {v.vouched ? 'Vouched' : 'Vouch'} {v.count > 0 ? `(${v.count})` : ''}
+									</button>
+								{:else if claim.vouchCount > 0}
+									<span class="badge" title="Vouches from peers">🤝 {claim.vouchCount}</span>
 								{/if}
 								{#if data.isCreator && claim.status === 'pending' && claim.fulfillmentPostId}
 									<button

@@ -10,6 +10,7 @@
 	let messaging = $state(false);
 
 	async function messageUser() {
+		if (!data.user) return goto('/auth/login');
 		if (messaging) return;
 		messaging = true;
 		try {
@@ -28,6 +29,7 @@
 	}
 
 	async function toggleFollow() {
+		if (!data.user) return goto('/auth/login');
 		if (pending) return;
 		pending = true;
 		const next = !following;
@@ -54,6 +56,12 @@
 		{ key: 'accountAge', label: 'Account age', emoji: '📅', max: 20 },
 		{ key: 'verifiedVisits', label: 'Verified visits', emoji: '✓', max: 30 },
 		{ key: 'bountiesPaid', label: 'Bounties paid', emoji: '🎯', max: 25 },
+	] as const;
+
+	const authorityBreakdown = [
+		{ key: 'postRank', label: 'Net post rank', emoji: '📈', max: 50 },
+		{ key: 'vouchesReceived', label: 'Vouches received', emoji: '🤝', max: 30 },
+		{ key: 'vouchesGiven', label: 'Vouches given', emoji: '🙌', max: 20 },
 	] as const;
 
 	function shorten(hash: string | null) {
@@ -166,6 +174,51 @@
 		</div>
 	</div>
 
+	<div class="card" style="padding:1.25rem">
+		<h2 style="font-size:1.05rem;margin-bottom:0.25rem">Authority Score</h2>
+		<p class="text-secondary" style="font-size:0.8rem;margin-bottom:0.85rem">
+			The Peer Ranking Engine's measure of community trust — earned from post votes and bounty-claim vouches.
+		</p>
+
+		<div class="reliability-score">
+			<div class="authority-score-num">{data.chainProfile.authority.total}<span>/100</span></div>
+			<div style="flex:1;min-width:160px">
+				<div class="reliability-score-label">Authority Score</div>
+				<div class="reliability-score-breakdown">
+					{#each authorityBreakdown as b}
+						<span title="{b.label}: {data.chainProfile.authority.breakdown[b.key]}/{b.max}">
+							{b.emoji} {data.chainProfile.authority.breakdown[b.key]}
+						</span>
+					{/each}
+				</div>
+			</div>
+		</div>
+	</div>
+
+	{#if data.isOwnProfile && data.shieldedBalance}
+		<div class="card" style="padding:1.25rem">
+			<div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;flex-wrap:wrap">
+				<h2 style="font-size:1.05rem">🔒 Shielded Balance</h2>
+				<span class="badge badge-unlink">Unlink {data.shieldedBalance.mode === 'live' ? '· Live' : '· Preview'}</span>
+			</div>
+
+			{#if data.shieldedBalance.privacyActive}
+				<div style="font-size:1.8rem;font-weight:700;letter-spacing:0.15em;margin-top:0.6rem;font-family:monospace">●●●●●● USDC</div>
+				<p class="text-secondary" style="font-size:0.8rem;margin-top:0.5rem;line-height:1.5">
+					Privacy mode is on — your total bounty earnings are withheld from this page's data entirely; only you can see the figure.
+					{#if data.shieldedBalance.mode === 'stub'}
+						Unlink isn't connected yet, so this is a preview of the shielded layout: the number is omitted server-side today, with no ZK proof behind it yet.
+					{/if}
+				</p>
+			{:else}
+				<div style="font-size:1.8rem;font-weight:700;margin-top:0.6rem">${data.shieldedBalance.totalUsdc?.toFixed(2)} USDC</div>
+				<p class="text-secondary" style="font-size:0.8rem;margin-top:0.5rem;line-height:1.5">
+					Total earned from bounty payouts. Turn on Privacy Mode in <a href="/settings">Settings</a> to withhold this figure from page data via Unlink.
+				</p>
+			{/if}
+		</div>
+	{/if}
+
 	<div class="divider"></div>
 
 	{#if data.posts.length === 0}
@@ -174,7 +227,7 @@
 			<div style="font-weight:600">No posts yet</div>
 		</div>
 	{:else}
-		<PostGrid posts={data.posts} currentUserId={data.user.id} />
+		<PostGrid posts={data.posts} currentUserId={data.user?.id} />
 	{/if}
 
 	<div class="divider"></div>
@@ -224,10 +277,16 @@
 			<div class="tech-card">
 				<div class="tech-card-header">
 					<span class="tech-name" style="color:var(--arc-gold)">Arc L1</span>
-					<span class="tech-status-dot stub"></span>
+					<span class="tech-status-dot" class:stub={data.chainProfile.arc.mode !== 'live'}></span>
 				</div>
 				<p class="tech-desc">Circle's purpose-built L1 — settles USDC bounty payouts at low cost.</p>
-				<div class="tech-detail">Payouts stubbed — settlement layer not yet connected</div>
+				<div class="tech-detail">
+					{#if data.chainProfile.arc.mode === 'live'}
+						Verified payouts settle on Arc
+					{:else}
+						Verified payouts get a settlement hash recorded — not yet broadcast on-chain (ARC_RPC_URL not set)
+					{/if}
+				</div>
 			</div>
 		</div>
 	</div>

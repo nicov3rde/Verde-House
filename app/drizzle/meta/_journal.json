@@ -15,6 +15,27 @@
       "when": 1781337066631,
       "tag": "0001_lowly_shockwave",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781383971839,
+      "tag": "0002_red_epoch",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781389999931,
+      "tag": "0003_overjoyed_human_cannonball",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1781395442893,
+      "tag": "0004_calm_blur",
+      "breakpoints": true
     }
   ]
 }
