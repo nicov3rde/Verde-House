@@ -140,6 +140,62 @@
 		</form>
 	</div>
 
+	<!-- Identity & Verification -->
+	<div class="card" style="padding:1.25rem;display:flex;flex-direction:column;gap:1rem">
+		<h2 style="font-size:1rem">Identity & Verification</h2>
+
+		<!-- World ID -->
+		<div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+			<div>
+				<div style="font-weight:600;font-size:0.9rem">World ID</div>
+				<p style="font-size:0.8rem;color:var(--text-secondary);margin-top:0.15rem">
+					Proof-of-personhood — verified scouts get a badge on their profile and count toward the network's
+					verified-human stats.
+				</p>
+			</div>
+			{#if data.worldId.verified}
+				<span class="badge badge-verified">✅ Verified</span>
+			{:else if data.worldId.mode === 'live'}
+				<button class="btn btn-secondary btn-sm" disabled>Verify with World ID</button>
+			{:else}
+				<span class="badge" title="World ID isn't configured yet for this deployment">Not verified</span>
+			{/if}
+		</div>
+
+		<div class="divider"></div>
+
+		<!-- ENS -->
+		<div>
+			<div style="font-weight:600;font-size:0.9rem">ENS</div>
+			<p style="font-size:0.8rem;color:var(--text-secondary);margin-top:0.15rem">
+				Link your ENS name to carry your reliability and category-expertise scores across apps{#if data.ens.mode === 'stub'}
+					&nbsp;(on-chain mirroring activates once this deployment has an ETH RPC endpoint configured){/if}.
+			</p>
+		</div>
+
+		{#if form?.section === 'ens'}
+			{#if form?.error}
+				<div class="form-error">{form.error}</div>
+			{:else if form?.success}
+				<div style="font-size:0.825rem;color:var(--verde)">ENS updated.</div>
+			{/if}
+		{/if}
+
+		{#if data.ens.name}
+			<div style="display:flex;align-items:center;justify-content:space-between;gap:0.75rem;flex-wrap:wrap">
+				<span class="badge badge-verified">{data.ens.name}</span>
+				<form method="POST" action="?/disconnectEns" use:enhance>
+					<button type="submit" class="btn btn-secondary btn-sm">Disconnect</button>
+				</form>
+			</div>
+		{:else}
+			<form method="POST" action="?/connectEns" use:enhance style="display:flex;gap:0.5rem">
+				<input class="input" name="ensName" type="text" placeholder="yourname.eth" style="flex:1" />
+				<button type="submit" class="btn btn-secondary btn-sm">Connect</button>
+			</form>
+		{/if}
+	</div>
+
 	<!-- Account -->
 	<div class="card" style="padding:1.25rem;display:flex;align-items:center;justify-content:space-between;gap:1rem">
 		<div>

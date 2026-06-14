@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import PostGrid from '$lib/components/PostGrid.svelte';
 
 	let { data } = $props();
@@ -8,6 +9,7 @@
 	let followerCount = $state(data.followerCount);
 	let pending = $state(false);
 	let messaging = $state(false);
+	let shareLabel = $state('🔗 Share');
 
 	async function messageUser() {
 		if (!data.user) return goto('/auth/login');
@@ -68,10 +70,73 @@
 		if (!hash) return '—';
 		return hash.length > 12 ? `${hash.slice(0, 6)}…${hash.slice(-4)}` : hash;
 	}
+
+	const pageTitle = $derived(`${data.profileUser.displayName} (@${data.profileUser.handle}) · Verde House`);
+	const profileUrl = $derived(`${$page.url.origin}/u/${data.profileUser.handle}`);
+
+	const ogImage = $derived.by(() => {
+		const avatar = data.profileUser.avatarUrl;
+		if (!avatar) return null;
+		return avatar.startsWith('http') ? avatar : `${$page.url.origin}${avatar}`;
+	});
+
+	const topExpertise = $derived.by(() => {
+		const exp = data.chainProfile.ens.expertise;
+		const categories = [
+			{ key: 'pizza', label: 'Pizza', emoji: '🍕' },
+			{ key: 'coffee', label: 'Coffee', emoji: '☕' },
+			{ key: 'nightlife', label: 'Nightlife', emoji: '🌃' },
+		] as const;
+		return categories.reduce<{ label: string; emoji: string; score: number } | null>((best, c) => {
+			const score = exp[c.key];
+			return score > 0 && (!best || score > best.score) ? { ...c, score } : best;
+		}, null);
+	});
+
+	const profileDescription = $derived(
+		topExpertise
+			? `${data.profileUser.displayName} has a Reliability Score of ${data.chainProfile.reliability.total}/100 and ${topExpertise.emoji} ${topExpertise.label} Expertise of ${topExpertise.score}/100 on Verde House.`
+			: `${data.profileUser.displayName} has a Reliability Score of ${data.chainProfile.reliability.total}/100 on Verde House — the earn-to-post app for verified local visits.`,
+	);
+
+	async function shareProfile() {
+		const shareData = { title: pageTitle, text: profileDescription, url: profileUrl };
+		if (navigator.share) {
+			try {
+				await navigator.share(shareData);
+			} catch {
+				// user cancelled — no-op
+			}
+			return;
+		}
+		try {
+			await navigator.clipboard.writeText(`${profileDescription}\n${profileUrl}`);
+			shareLabel = '✅ Copied!';
+		} catch {
+			shareLabel = 'Copy failed';
+		}
+		setTimeout(() => (shareLabel = '🔗 Share'), 2000);
+	}
 </script>
 
 <svelte:head>
-	<title>{data.profileUser.displayName} (@{data.profileUser.handle}) · Verde House</title>
+	<title>{pageTitle}</title>
+	<meta name="description" content={profileDescription} />
+
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content={pageTitle} />
+	<meta property="og:description" content={profileDescription} />
+	<meta property="og:url" content={profileUrl} />
+	{#if ogImage}
+		<meta property="og:image" content={ogImage} />
+	{/if}
+
+	<meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+	<meta name="twitter:title" content={pageTitle} />
+	<meta name="twitter:description" content={profileDescription} />
+	{#if ogImage}
+		<meta name="twitter:image" content={ogImage} />
+	{/if}
 </svelte:head>
 
 <div class="profile-col">
@@ -136,6 +201,7 @@
 						Message
 					</button>
 				{/if}
+				<button onclick={shareProfile} class="btn btn-secondary btn-sm">{shareLabel}</button>
 			</div>
 		</div>
 	</div>

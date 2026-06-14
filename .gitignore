@@ -25,6 +25,7 @@ vite.config.*.timestamp-*
 
 # Build output / runtime data
 **/dist/
+**/logs/
 *.tsbuildinfo
 *.db
 *.db-shm

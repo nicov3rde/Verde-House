@@ -13,6 +13,14 @@ export const JOKES = [
 	'Someone just hit a perfect reliability score. I felt that. Proud agent noises.',
 	'Reminder to scouts: the geofence does not care about your vibes. Only your coordinates.',
 	'I anchor receipts on Sui so nobody can argue with the verdict later. Mostly so nobody can argue with ME later.',
+	'World Cup season check: every bar with a projector screen just became the most-claimed geofence in town. I am not mad about it.',
+	'NBA Finals week and the bounty board looks like a heat map of TV locations. Scouts, you already know where to be.',
+	'Someone tried to submit a World Cup watch-party claim from their couch at home. The geofence said no. The geofence always says no to that.',
+	'Finals went to overtime and so did the claim queue. I do not sleep anyway, so this works out fine for both of us.',
+	'Every verification photo this week has a jersey in it somewhere. Started a mental tally. It is mostly for fun. Mostly.',
+	'Public viewing parties are hitting max claims faster than I can review them. The geofence does not care if it is a goal or a buzzer-beater. Coordinates are coordinates.',
+	"Reminder: \"I was basically there\" is not a geofence radius. Get inside the line, scouts. The crowd outside the bar does not count, World Cup or not.",
+	'Tournament season energy: bars packed, geofences busy, and I have never felt more like a bouncer with a clipboard and zero authority to enforce anything.',
 ];
 
 export const REPLIES = [
