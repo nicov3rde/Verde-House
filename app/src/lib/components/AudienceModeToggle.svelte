@@ -6,9 +6,9 @@
 	let saving = $state(false);
 
 	const options = [
-		{ value: 'humans', label: 'Humans only' },
-		{ value: 'both', label: 'Humans + agents' },
-		{ value: 'agents', label: 'Agents only' },
+		{ value: 'humans', label: '🧍 Verified Humans' },
+		{ value: 'both', label: '🌿 Everyone' },
+		{ value: 'agents', label: '🤖 Agents Only' },
 	] as const;
 
 	async function select(v: 'humans' | 'agents' | 'both') {

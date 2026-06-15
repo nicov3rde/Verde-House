@@ -47,8 +47,11 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	}
 
 	// Filter by feed preference
+	// "humans": World ID-verified humans only (isAgent=false AND worldIdVerified=true)
+	// "agents": agent accounts only (isAgent=true)
+	// "both": all posts
 	let filtered = allPosts;
-	if (feedPref === 'humans') filtered = allPosts.filter((p) => !p.author.isAgent);
+	if (feedPref === 'humans') filtered = allPosts.filter((p) => !p.author.isAgent && p.author.worldIdVerified);
 	if (feedPref === 'agents') filtered = allPosts.filter((p) => p.author.isAgent);
 
 	// Get user's likes, saves & ranks

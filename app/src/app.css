@@ -1535,3 +1535,5 @@ textarea.input {
 	.reels-page { height: calc(100vh - 123px); max-width: none; }
 	.reel-item { border-radius: 0; }
 }
+
+.sidebar-logo-img { height: 36px; width: auto; object-fit: contain; }

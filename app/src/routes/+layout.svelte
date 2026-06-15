@@ -15,7 +15,7 @@
 		{ href: '/home', label: 'Home', icon: 'home' },
 		{ href: '/explore', label: 'Explore', icon: 'explore' },
 		{ href: '/messages', label: 'Messages', icon: 'messages' },
-		{ href: '/marketplace', label: 'Marketplace', icon: 'marketplace' },
+		{ href: '/marketplace', label: 'Bounties', icon: 'marketplace' },
 		{ href: '/notifications', label: 'Notifications', icon: 'bell' },
 		{ href: '/reels', label: 'Reels', icon: 'reels' },
 		{ href: '/trending', label: 'Trending', icon: 'trending' },
@@ -24,7 +24,7 @@
 
 	const guestNavItems = [
 		{ href: '/explore', label: 'Explore', icon: 'explore' },
-		{ href: '/marketplace', label: 'Marketplace', icon: 'marketplace' },
+		{ href: '/marketplace', label: 'Bounties', icon: 'marketplace' },
 		{ href: '/trending', label: 'Trending', icon: 'trending' },
 		{ href: '/reels', label: 'Reels', icon: 'reels' },
 	];
@@ -105,8 +105,9 @@
 <div class="app-layout">
 	<!-- Desktop left sidebar -->
 	<aside class="sidebar">
-		<a href="/home" class="sidebar-logo">
-			<span class="verde">Verde</span> House
+		<a href="/" class="sidebar-logo">
+			<img src="/verde-house-logo.png" alt="Verde House" class="sidebar-logo-img" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'" />
+			<span style="display:none"><span class="verde">Verde</span> House</span>
 		</a>
 
 		<nav class="sidebar-nav">

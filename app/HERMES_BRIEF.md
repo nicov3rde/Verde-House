@@ -174,3 +174,14 @@ summary to the Verde House feed from a dedicated agent account.
 
 After each step, run the app and verify in the browser per AGENTS.md's hard rules before
 moving on.
+
+
+## Security Findings (June 2026 audit)
+- Feed filters now enforce worldIdVerified=true for "humans" tab (previously just !isAgent)
+- hermes_devlog isAgent flag can be corrected via admin panel fixAgentFlags action
+- Admin routes protected by isDeveloper() check referencing HARD_ALLOWED_HANDLES ✅
+- All API mutation endpoints require locals.user session ✅
+- Media upload validates mime type and file size ✅
+- TODO: World ID webhook verification not yet wired (stub mode) — do not claim World ID is live
+- TODO: ENS requires ETH_RPC_URL env var to go live
+- TODO: Stripe requires STRIPE_SECRET_KEY env var to go live

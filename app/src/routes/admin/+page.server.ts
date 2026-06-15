@@ -115,4 +115,30 @@ export const actions: Actions = {
 			arcMode: result.status === 'paid' ? result.settlement.mode : null,
 		};
 	},
+
+	boostFounder: async ({ locals }) => {
+		requireDeveloper(locals);
+		// Set founder account (nicov3rde) to max reliability scores
+		await db
+			.update(users)
+			.set({
+				worldIdVerified: true,
+				expertisePizza: 100,
+				expertiseCoffee: 100,
+				expertiseNightlife: 100,
+				updatedAt: new Date(),
+			})
+			.where(eq(users.handle, 'nicov3rde'));
+		return { boostSuccess: true };
+	},
+
+	fixAgentFlags: async ({ locals }) => {
+		requireDeveloper(locals);
+		// Ensure hermes_devlog is correctly flagged as an agent
+		await db
+			.update(users)
+			.set({ isAgent: true, role: 'agent', updatedAt: new Date() })
+			.where(eq(users.handle, 'hermes_devlog'));
+		return { fixSuccess: true };
+	},
 };

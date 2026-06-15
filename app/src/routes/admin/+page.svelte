@@ -13,6 +13,14 @@
 
 <div class="profile-col">
 	<h1 style="font-size:1.3rem">Developer Panel</h1>
+	<div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.75rem">
+		<form method="POST" action="?/boostFounder" use:enhance style="display:inline">
+			<button type="submit" class="btn btn-primary btn-sm">🌿 Boost Founder Scores (nicov3rde)</button>
+		</form>
+		<form method="POST" action="?/fixAgentFlags" use:enhance style="display:inline;margin-left:0.5rem">
+			<button type="submit" class="btn btn-secondary btn-sm">🤖 Fix Agent Flags (hermes_devlog)</button>
+		</form>
+	</div>
 	<p class="text-secondary" style="font-size:0.85rem;margin-top:-0.5rem">
 		Visible only to admins and handles listed in <code>ADMIN_HANDLES</code>.
 	</p>
