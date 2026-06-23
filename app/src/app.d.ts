@@ -7,6 +7,7 @@ declare global {
 		interface Locals {
 			user: SessionUser | null;
 			session: { id: string; userId: string; expiresAt: Date } | null;
+			auth: import('lucia').Auth;
 		}
 		// interface Error {}
 		// interface PageData {}

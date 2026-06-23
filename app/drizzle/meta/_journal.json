@@ -36,6 +36,13 @@
       "when": 1781395442893,
       "tag": "0004_calm_blur",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1782231512061,
+      "tag": "0005_mature_wither",
+      "breakpoints": true
     }
   ]
 }

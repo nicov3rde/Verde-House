@@ -14,7 +14,8 @@
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",
 		"db:studio": "drizzle-kit studio",
-		"hermes:tick": "node scripts/hermes-daemon.mjs"
+		"hermes:tick": "node scripts/hermes-daemon.mjs",
+		"post-devlog": "vite build --ssr src/lib/server/services/devlog.ts && node dist/server/devlog.js"
 	},
 	"devDependencies": {
 		"@neondatabase/serverless": "^1.1.0",
@@ -33,13 +34,16 @@
 	},
 	"dependencies": {
 		"@lucia-auth/adapter-drizzle": "^1.1.0",
+		"@mysten/sui": "^2.17.0",
 		"@stripe/stripe-js": "^9.8.0",
 		"@types/bcryptjs": "^2.4.6",
 		"@types/uuid": "^10.0.0",
 		"bcryptjs": "^3.0.3",
+		"dotenv": "^17.4.2",
 		"lucia": "^3.2.2",
 		"oslo": "^1.2.1",
 		"stripe": "^22.2.1",
-		"uuid": "^14.0.0"
+		"uuid": "^14.0.0",
+		"viem": "^2.53.1"
 	}
 }

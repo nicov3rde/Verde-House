@@ -26,7 +26,7 @@
 			<h1 style="font-size:1.3rem;margin-bottom:1.5rem">Sign in</h1>
 
 			{#if form?.error}
-				<div style="background:rgba(255,80,80,0.08);border:1px solid rgba(255,80,80,0.25);border-radius:0.5rem;padding:0.75rem;margin-bottom:1rem;font-size:0.85rem;color:#ff5050">
+				<div style="background:rgba(255,80,80,0.08);border:1px solid rgba(255,80,80,0.25);border-radius:0;padding:0.75rem;margin-bottom:1rem;font-size:0.85rem;color:#ff5050">
 					{form.error}
 				</div>
 			{/if}

@@ -34,6 +34,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 				.select({
 					id: bounties.id,
 					title: bounties.title,
+					description: bounties.description,
 					placeName: bounties.placeName,
 					radiusMiles: bounties.radiusMiles,
 					rewardUsdc: bounties.rewardUsdc,
@@ -42,6 +43,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 					status: bounties.status,
 					createdAt: bounties.createdAt,
 					brand: sql<string>`coalesce(${users.businessName}, ${users.displayName})`,
+					creatorHandle: users.handle,
+					creatorRole: users.role,
 					creatorIsAgent: users.isAgent,
 				})
 				.from(bounties)
@@ -71,7 +74,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			shieldedPayoutsUsdc: totalPayouts,
 			privatePayoutPct,
 		},
-		ledger: filteredLedger.map(({ creatorIsAgent, ...b }) => ({
+		ledger: filteredLedger.map((b) => ({
 			...b,
 			radiusMiles: Number(b.radiusMiles),
 			rewardUsdc: Number(b.rewardUsdc),

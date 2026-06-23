@@ -4,9 +4,11 @@
 	let {
 		user,
 		bountyClaim = null,
+		onSuccess,
 	}: {
 		user: { id: string; handle: string; displayName: string; avatarUrl?: string | null };
 		bountyClaim?: { id: string; bountyTitle: string; placeName: string | null } | null;
+		onSuccess?: () => void;
 	} = $props();
 
 	let caption = $state('');
@@ -107,6 +109,7 @@
 			uploadStatus = '';
 			if (!bountyClaim) placeName = '';
 			await invalidateAll();
+			onSuccess?.();
 		} catch {
 			error = 'Could not create post. Try again.';
 		} finally {

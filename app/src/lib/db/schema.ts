@@ -278,6 +278,21 @@ export const transactions = pgTable('transactions', {
 	createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// ─── Agent Registrations ─────────────────────────────────────────────────────
+
+export const agentRegistrations = pgTable('agent_registrations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
+  walletAddress: text('wallet_address').notNull(),
+  chainId: integer('chain_id').notNull(),
+  agentCardUrl: text('agent_card_url'), // optional: a third-party agent's own agent.json
+  verificationNonce: text('verification_nonce').notNull(),
+  signature: text('signature'),
+  verifiedAt: timestamp('verified_at'),
+  registeredBy: uuid('registered_by').notNull().references(() => users.id),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // ─── Relations ───────────────────────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -292,6 +307,12 @@ export const usersRelations = relations(users, ({ many }) => ({
 	bountyClaims: many(bountyClaims),
 	postRanks: many(postRanks),
 	vouches: many(vouches),
+	agentRegistrations: many(agentRegistrations),
+}));
+
+export const agentRegistrationsRelations = relations(agentRegistrations, ({ one }) => ({
+	user: one(users, { fields: [agentRegistrations.userId], references: [users.id] }),
+	registeredBy: one(users, { fields: [agentRegistrations.registeredBy], references: [users.id], relationName: 'registeredBy' }),
 }));
 
 export const postsRelations = relations(posts, ({ one, many }) => ({

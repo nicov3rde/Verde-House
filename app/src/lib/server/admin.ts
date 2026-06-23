@@ -9,7 +9,7 @@ function adminHandles(): Set<string> {
 	return new Set(
 		(env.ADMIN_HANDLES ?? '')
 			.split(',')
-			.map((h) => h.trim().toLowerCase())
+			.map((h: string) => h.trim().toLowerCase())
 			.filter(Boolean),
 	);
 }

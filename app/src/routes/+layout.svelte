@@ -2,10 +2,32 @@
 	import '../app.css';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
 	import { theme } from '$lib/theme';
 	import AudienceModeToggle from '$lib/components/AudienceModeToggle.svelte';
-
+	import PostComposerModal from '$lib/components/PostComposerModal.svelte';
 	let { children, data } = $props();
+
+	let composerOpen = $state(false);
+
+	// Swipe gesture state
+	let touchStartX = 0;
+	let touchStartY = 0;
+	const SWIPE_THRESHOLD = 80;
+
+	function onTouchStart(e: TouchEvent) {
+		touchStartX = e.touches[0].clientX;
+		touchStartY = e.touches[0].clientY;
+	}
+
+	function onTouchEnd(e: TouchEvent) {
+		if (!$page.url.pathname.startsWith('/home')) return;
+		const dx = e.changedTouches[0].clientX - touchStartX;
+		const dy = e.changedTouches[0].clientY - touchStartY;
+		if (Math.abs(dy) > Math.abs(dx)) return;
+		if (dx < -SWIPE_THRESHOLD) goto('/messages');
+		if (dx > SWIPE_THRESHOLD) composerOpen = true;
+	}
 
 	onMount(() => {
 		theme.init();
@@ -86,6 +108,10 @@
 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
 {/snippet}
 
+{#snippet plusIcon()}
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+{/snippet}
+
 {#snippet iconFor(name: string)}
 	{#if name === 'home'}{@render homeIcon()}
 	{:else if name === 'explore'}{@render exploreIcon()}
@@ -157,26 +183,47 @@
 		</div>
 	</aside>
 
-	<main class="main-content">
+	<main class="main-content" ontouchstart={onTouchStart} ontouchend={onTouchEnd}>
 		<div class="topbar">
+			<a href="/home" class="topbar-logo">
+				<span class="verde">Verde</span> House
+			</a>
 			<AudienceModeToggle value={data.user.feedPreference} />
+			<button type="button" class="topbar-post-btn" aria-label="Create post" title="Create post" onclick={() => (composerOpen = true)}>
+				{@render plusIcon()}
+			</button>
 		</div>
 		{@render children()}
 	</main>
 
-	<!-- Mobile bottom nav -->
+	<!-- Mobile bottom nav (Instagram-style) -->
 	<nav class="bottom-nav">
-		{#each [navItems[0], navItems[1], navItems[2], navItems[3], navItems[4]] as item}
-			<a href={item.href} class="bottom-nav-item" class:active={isActive(item.href)} style="position:relative">
-				<div style="width:22px;height:22px">{@render iconFor(item.icon)}</div>
-				{item.label}
-				{#if (item.icon === 'bell' && data.unreadNotifications) || (item.icon === 'messages' && data.unreadMessages)}
-					<span class="notif-dot" style="position:absolute;top:4px;right:calc(50% - 16px)"></span>
-				{/if}
-			</a>
-		{/each}
+		<a href="/home" class="bottom-nav-item" class:active={isActive('/home')}>
+			<div style="width:22px;height:22px">{@render homeIcon()}</div>
+			Home
+		</a>
+		<a href="/reels" class="bottom-nav-item" class:active={isActive('/reels')}>
+			<div style="width:22px;height:22px">{@render reelsIcon()}</div>
+			Reels
+		</a>
+		<a href="/marketplace" class="bottom-nav-item bottom-nav-center" class:active={isActive('/marketplace')}>
+			<div class="bottom-nav-fab">{@render marketplaceIcon()}</div>
+		</a>
+		<a href="/notifications" class="bottom-nav-item" class:active={isActive('/notifications')} style="position:relative">
+			<div style="width:22px;height:22px">{@render bellIcon()}</div>
+			Notifs
+			{#if data.unreadNotifications}
+				<span class="notif-dot" style="position:absolute;top:4px;right:calc(50% - 16px)"></span>
+			{/if}
+		</a>
+		<a href={profileHref()} class="bottom-nav-item" class:active={$page.url.pathname.startsWith('/u/')}>
+			<div style="width:22px;height:22px">{@render profileIcon()}</div>
+			Profile
+		</a>
 	</nav>
 </div>
+
+<PostComposerModal bind:open={composerOpen} user={data.user} />
 
 {:else if isGuestShellRoute($page.url.pathname)}
 <!-- Guest app shell: browse the network without an account -->

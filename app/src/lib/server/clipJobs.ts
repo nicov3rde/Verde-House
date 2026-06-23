@@ -1,11 +1,12 @@
 import { spawn } from 'node:child_process';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 
 const CLIP_BOT_DIR = path.resolve(process.cwd(), '../clip-bot');
 const PYTHON_BIN = path.join(CLIP_BOT_DIR, 'venv', 'Scripts', 'python.exe');
+const MODAL_ENDPOINT_URL = process.env.MODAL_ENDPOINT_URL ?? '';
 
 export interface ClipShort {
 	title: string;
@@ -29,6 +30,10 @@ export interface ClipJob {
 }
 
 const jobs = new Map<string, ClipJob>();
+
+export function isModalConfigured(): boolean {
+	return MODAL_ENDPOINT_URL.length > 0;
+}
 
 // Mirrors the progress mapping used by the consumer-app worker for clip-bot's stdout.
 function parseProgress(line: string): [string, number] {
@@ -66,7 +71,7 @@ function parseProgress(line: string): [string, number] {
 	return ['', 0];
 }
 
-export function startClipJob(url: string, numClips: number, aspectRatio: string): string {
+export function startClipJob(source: string, numClips: number, aspectRatio: string): string {
 	const id = randomUUID();
 	const outDir = path.join(CLIP_BOT_DIR, 'output', 'web', id);
 	mkdirSync(outDir, { recursive: true });
@@ -84,7 +89,7 @@ export function startClipJob(url: string, numClips: number, aspectRatio: string)
 	const resultJsonPath = path.join(outDir, 'result.json');
 	const args = [
 		'main.py',
-		url,
+		source,
 		'--mode',
 		'local',
 		'--num-clips',
@@ -151,6 +156,89 @@ export function startClipJob(url: string, numClips: number, aspectRatio: string)
 		job.status = 'error';
 		job.error = `Failed to start clip-bot: ${err.message}`;
 	});
+
+	return id;
+}
+
+export function startClipJobModal(url: string, numClips: number, aspectRatio: string): string {
+	const id = randomUUID();
+	const outDir = path.join(CLIP_BOT_DIR, 'output', 'web', id);
+	mkdirSync(outDir, { recursive: true });
+
+	const job: ClipJob = {
+		id,
+		status: 'running',
+		message: 'Processing on cloud…',
+		percent: 10,
+		log: ['Sending job to Modal…'],
+		outDir
+	};
+	jobs.set(id, job);
+
+	(async () => {
+		try {
+			job.log.push(`POST ${MODAL_ENDPOINT_URL}`);
+			const res = await fetch(MODAL_ENDPOINT_URL, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ url, numClips, aspectRatio, language: 'en' }),
+				signal: AbortSignal.timeout(900_000),
+			});
+
+			if (!res.ok) {
+				const text = await res.text().catch(() => '');
+				throw new Error(`Modal returned ${res.status}: ${text.slice(0, 500)}`);
+			}
+
+			const result = await res.json();
+
+			if (result.error) {
+				throw new Error(result.error);
+			}
+
+			job.log.push('Received response from Modal');
+			job.message = 'Writing clips…';
+			job.percent = 85;
+
+			const shorts: ClipShort[] = [];
+			for (const s of result.shorts ?? []) {
+				if (s.data && s.filename) {
+					const buf = Buffer.from(s.data, 'base64');
+					const filePath = path.join(outDir, s.filename);
+					writeFileSync(filePath, buf);
+					job.log.push(`Wrote ${s.filename} (${(buf.length / 1024 / 1024).toFixed(1)} MB)`);
+					shorts.push({
+						title: s.title ?? '',
+						hook_sentence: s.hook_sentence ?? '',
+						score: s.score ?? 0,
+						start_time: s.start_time ?? 0,
+						end_time: s.end_time ?? 0,
+						filename: s.filename,
+					});
+				} else {
+					shorts.push({
+						title: s.title ?? '',
+						hook_sentence: s.hook_sentence ?? '',
+						score: s.score ?? 0,
+						start_time: s.start_time ?? 0,
+						end_time: s.end_time ?? 0,
+						filename: null,
+						error: s.error ?? 'No clip data returned',
+					});
+				}
+			}
+
+			job.shorts = shorts;
+			job.status = 'done';
+			job.message = 'Done';
+			job.percent = 100;
+			job.log.push(`Done — ${shorts.filter((s) => s.filename).length} clips ready`);
+		} catch (e) {
+			job.status = 'error';
+			job.error = e instanceof Error ? e.message : String(e);
+			job.log.push(`Error: ${job.error}`);
+		}
+	})();
 
 	return id;
 }
